@@ -1,0 +1,6 @@
+# 手動維護清單
+
+## special/market_pullback_history.json
+
+- 若豁達人生更新回檔數據，同步更新 content 和 url 欄位
+- 目前連結指向：https://huodalife.pixnet.net/blog/posts/9577793284

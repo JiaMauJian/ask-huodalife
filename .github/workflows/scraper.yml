@@ -1,0 +1,38 @@
+name: 豁達人生文章知識庫更新
+
+on:
+  schedule:
+    # 每 6 小時跑一次
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  scrape-articles:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run scraper
+        run: python blog_scraper.py
+
+      - name: 儲存文章到 repo
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add articles.json
+          git diff --staged --quiet || git commit -m "update articles $(date +'%Y-%m-%d %H:%M')"
+          git push
