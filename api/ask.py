@@ -9,7 +9,6 @@ import sys
 import requests as req
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler
-from qa_logger import log_qa
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -20,7 +19,7 @@ from blog_qa import (
     select_top_articles, fetch_articles,
     load_data, API_KEY, SONNET
 )
-from pathlib import Path
+from qa_logger import log_qa
 
 
 def stream_answer(question: str, articles: list):
@@ -157,15 +156,16 @@ class handler(BaseHTTPRequestHandler):
                     except Exception:
                         pass
 
-            # 串流結束，背景寫 log
-            import threading
+            # 串流結束，直接寫 log
             full_answer = "".join(answer_chunks)
-            threading.Thread(
-                target=log_qa,
-                args=(question, keywords, len(candidates),
-                    top_ids, top_articles, full_answer),
-                daemon=True,
-            ).start()
+            log_qa(
+                question=question,
+                keywords=keywords,
+                candidate_count=len(candidates),
+                top_ids=top_ids,
+                articles=top_articles,
+                answer=full_answer,
+            )
 
         except Exception as e:
             try:
