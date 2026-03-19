@@ -1,93 +1,110 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>小豁 — 豁達人生財經室知識助理</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&family=Noto+Sans+TC:wght@400;500&family=DM+Serif+Display:ital@0;1&display=swap"
+    rel="stylesheet">
+
   <style>
-    :root {
-      --bg: #0f0e0c;
-      --surface: #1a1814;
-      --border: #2e2b26;
-      --accent: #c9a84c;
-      --accent-dim: #7a6530;
-      --text: #e8e0d0;
-      --text-dim: #8a8070;
-      --text-muted: #504840;
-      --answer-bg: #161410;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #1a1a18;
+      --ink-soft: #2a2a28;
+      --muted: #555;
+      --border: #e4e4e0;
+      --bg: #f7f6f3;
+      --card: #ffffff;
+      --accent: #2c2c28;
+    }
 
     body {
       background: var(--bg);
-      color: var(--text);
-      font-family: 'Noto Sans TC', sans-serif;
+      color: var(--ink);
+      font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+
+      font-weight: 400;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
-    /* ── 頂部 header ── */
     header {
       width: 100%;
-      max-width: 760px;
-      padding: 48px 24px 32px;
+      max-width: 720px;
+      padding: 72px 28px 48px;
       text-align: center;
     }
 
-    .logo-mark {
-      font-family: 'Noto Serif TC', serif;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.25em;
-      color: var(--accent);
-      text-transform: uppercase;
-      margin-bottom: 16px;
+    .site-label {
+      font-size: 14px;
+      letter-spacing: 0.28em;
+      color: var(--muted);
+      margin-bottom: 20px;
     }
 
     h1 {
+      font-family: 'DM Serif Display', 'Noto Serif TC', serif;
+      font-size: 72px;
+      font-weight: 500;
+      letter-spacing: -0.005em;
+      margin-bottom: 8px;
+    }
+
+    .h1-sub {
       font-family: 'Noto Serif TC', serif;
-      font-size: 36px;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: 0.05em;
-      line-height: 1.2;
-      margin-bottom: 12px;
+      font-size: 22px;
+      color: var(--ink-soft);
+      letter-spacing: 0.15em;
+      margin-bottom: 24px;
     }
 
     .subtitle {
-      font-size: 14px;
-      color: var(--text-dim);
-      font-weight: 300;
-      letter-spacing: 0.08em;
-      line-height: 1.8;
+      font-size: 15.5px;
+      color: var(--muted);
+      font-weight: 400;
+      line-height: 2;
+      letter-spacing: 0.01em;
     }
 
     .divider {
       width: 48px;
       height: 1px;
-      background: var(--accent-dim);
-      margin: 24px auto;
+      background: var(--border);
+      margin: 28px auto;
     }
 
-    /* ── 主體 ── */
     main {
       width: 100%;
-      max-width: 760px;
-      padding: 0 24px 48px;
+      max-width: 720px;
+      padding: 0 28px 96px;
       flex: 1;
     }
 
-    /* ── 輸入區 ── */
-    .input-area {
-      background: var(--surface);
+    .input-wrap {
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 20px;
-      margin-bottom: 24px;
+      border-radius: 20px;
+      padding: 28px 28px 18px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
     }
 
     textarea {
@@ -95,17 +112,16 @@
       background: transparent;
       border: none;
       outline: none;
-      color: var(--text);
-      font-family: 'Noto Sans TC', sans-serif;
-      font-size: 15px;
-      font-weight: 300;
-      line-height: 1.8;
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1.9;
+      letter-spacing: 0.01em;
       resize: none;
-      min-height: 80px;
+      min-height: 96px;
     }
 
     textarea::placeholder {
-      color: var(--text-muted);
+      color: #aaa;
     }
 
     .input-footer {
@@ -114,191 +130,184 @@
       align-items: center;
       margin-top: 16px;
       padding-top: 16px;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid #f0f0ec;
     }
 
     .hint {
-      font-size: 12px;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
+      font-size: 13px;
+      color: #666;
+      letter-spacing: 0.08em;
     }
 
     button {
       background: var(--accent);
-      color: #0f0e0c;
+      color: #fff;
       border: none;
-      padding: 10px 24px;
-      font-family: 'Noto Sans TC', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 0.1em;
+      padding: 13px 30px;
+      font-size: 15px;
+      letter-spacing: 0.08em;
       cursor: pointer;
-      border-radius: 2px;
-      transition: background 0.2s, opacity 0.2s;
+      border-radius: 14px;
     }
 
     button:hover:not(:disabled) {
-      background: #e0bc6a;
+      background: #444;
     }
 
     button:disabled {
-      opacity: 0.4;
+      opacity: 0.3;
       cursor: not-allowed;
     }
 
-    /* ── 載入中 ── */
     .loading {
       display: none;
       align-items: center;
       gap: 12px;
-      padding: 20px;
-      color: var(--text-dim);
-      font-size: 14px;
-      letter-spacing: 0.05em;
+      padding: 20px 4px;
+      color: var(--muted);
     }
 
-    .loading.show { display: flex; }
+    .loading.show {
+      display: flex;
+    }
 
     .dots {
       display: flex;
-      gap: 5px;
+      gap: 6px;
     }
 
     .dots span {
-      width: 5px;
-      height: 5px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: var(--accent-dim);
-      animation: pulse 1.4s ease-in-out infinite;
+      background: #ccc;
+      animation: pulse 1.2s infinite;
     }
-
-    .dots span:nth-child(2) { animation-delay: 0.2s; }
-    .dots span:nth-child(3) { animation-delay: 0.4s; }
 
     @keyframes pulse {
-      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-      40% { opacity: 1; transform: scale(1); }
+
+      0%,
+      80%,
+      100% {
+        opacity: 0.3;
+      }
+
+      40% {
+        opacity: 1;
+      }
     }
 
-    /* ── 回答區 ── */
     .answer-card {
       display: none;
-      background: var(--answer-bg);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      border-radius: 4px;
-      padding: 28px;
-      animation: fadeIn 0.4s ease;
+      border-radius: 20px;
+      padding: 36px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+      margin-bottom: 36px;
     }
 
-    .answer-card.show { display: block; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .answer-card.show {
+      display: block;
     }
 
     .answer-label {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.2em;
-      color: var(--accent);
-      text-transform: uppercase;
-      margin-bottom: 16px;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      color: #666;
+      margin-bottom: 20px;
     }
 
     .answer-text {
-      font-size: 15px;
-      line-height: 2;
-      color: var(--text);
-      font-weight: 300;
+      font-size: 17px;
+      line-height: 2.1;
+      color: var(--ink-soft);
+      font-weight: 400;
+      letter-spacing: 0.01em;
       white-space: pre-wrap;
-      word-break: break-word;
     }
 
-    /* ── 範例問題 ── */
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background: var(--muted);
+      margin-left: 2px;
+      animation: blink 0.8s infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
     .examples {
-      margin-top: 32px;
+      margin-top: 12px;
     }
 
     .examples-label {
-      font-size: 11px;
-      letter-spacing: 0.2em;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      margin-bottom: 12px;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      color: #666;
+      margin-bottom: 14px;
     }
 
-    .example-chips {
+    .chips {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
     }
 
     .chip {
-      background: var(--surface);
+      background: var(--card);
       border: 1px solid var(--border);
-      color: var(--text-dim);
-      font-size: 13px;
-      font-weight: 300;
-      padding: 7px 14px;
-      border-radius: 2px;
+      font-size: 14.5px;
+      font-weight: 400;
+      padding: 11px 20px;
+      border-radius: 28px;
       cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.02em;
     }
 
-    .chip:hover {
-      border-color: var(--accent-dim);
-      color: var(--text);
-    }
-
-    /* ── footer ── */
     footer {
       width: 100%;
-      max-width: 760px;
-      padding: 24px;
+      max-width: 720px;
+      padding: 22px 28px;
       text-align: center;
-      font-size: 12px;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
+      font-size: 13px;
+      color: #aaa;
       border-top: 1px solid var(--border);
     }
-
-    footer a {
-      color: var(--accent-dim);
-      text-decoration: none;
-    }
-
-    footer a:hover { color: var(--accent); }
   </style>
+
 </head>
+
 <body>
 
   <header>
-    <div class="logo-mark">豁達人生財經室</div>
+    <div class="site-label">豁達人生財經室</div>
     <h1>小豁</h1>
+    <div class="h1-sub">知識助理</div>
+    <div class="divider"></div>
     <div class="subtitle">
       基於豁達人生多年月報與投資哲學的知識助理<br>
       回答內容純屬知識整理，不代表任何投資建議
     </div>
-    <div class="divider"></div>
   </header>
 
   <main>
-    <div class="input-area">
-      <textarea id="question" placeholder="輸入你的投資問題，例如：股市大跌很恐慌怎麼辦？" rows="3"></textarea>
+    <div class="input-wrap">
+      <textarea id="question" placeholder="輸入你的投資問題⋯⋯" rows="3"></textarea>
       <div class="input-footer">
-        <span class="hint">小豁會從豁達人生的文章中找答案</span>
+        <span class="hint">Shift + Enter 換行　Enter 送出</span>
         <button id="askBtn" onclick="submitQuestion()">詢問小豁</button>
       </div>
     </div>
 
     <div class="loading" id="loading">
-      <div class="dots">
-        <span></span><span></span><span></span>
-      </div>
-      <span>小豁正在查詢豁達人生的文章⋯⋯</span>
+      <div class="dots"><span></span><span></span><span></span></div>
+      <span>小豁正在思考⋯⋯</span>
     </div>
 
     <div class="answer-card" id="answerCard">
@@ -308,7 +317,7 @@
 
     <div class="examples">
       <div class="examples-label">範例問題</div>
-      <div class="example-chips">
+      <div class="chips">
         <div class="chip" onclick="useExample(this)">股市大跌很恐慌怎麼辦</div>
         <div class="chip" onclick="useExample(this)">什麼是比較原則</div>
         <div class="chip" onclick="useExample(this)">遇到黑天鵝怎麼辦</div>
@@ -317,22 +326,20 @@
         <div class="chip" onclick="useExample(this)">大盤MACD轉負出清策略是什麼</div>
       </div>
     </div>
+
   </main>
 
   <footer>
-    知識來源：<a href="https://huodalife.pixnet.net/blog" target="_blank">豁達人生財經室</a>
-    &nbsp;·&nbsp;
-    回答內容純屬知識整理，不代表任何投資建議，也不保證資料完全正確
+    知識來源：豁達人生財經室
   </footer>
 
   <script>
     const textarea = document.getElementById('question')
-    const btn      = document.getElementById('askBtn')
-    const loading  = document.getElementById('loading')
-    const card     = document.getElementById('answerCard')
-    const text     = document.getElementById('answerText')
+    const btn = document.getElementById('askBtn')
+    const loading = document.getElementById('loading')
+    const card = document.getElementById('answerCard')
+    const textEl = document.getElementById('answerText')
 
-    // Enter 送出（Shift+Enter 換行）
     textarea.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault()
@@ -349,10 +356,10 @@
       const question = textarea.value.trim()
       if (!question) return
 
-      // 顯示載入中
       btn.disabled = true
       loading.classList.add('show')
       card.classList.remove('show')
+      textEl.textContent = ''
 
       try {
         const res = await fetch('/api/ask', {
@@ -361,20 +368,50 @@
           body: JSON.stringify({ question })
         })
 
-        const data = await res.json()
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
 
-        text.textContent = data.answer || data.error || '發生錯誤，請稍後再試'
         card.classList.add('show')
+        loading.classList.remove('show')
+
+        const cursor = document.createElement('span')
+        cursor.className = 'cursor'
+        textEl.appendChild(cursor)
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+
+          const parts = buffer.split('\n\n')
+          buffer = parts.pop()
+
+          for (const part of parts) {
+            if (!part.startsWith('data: ')) continue
+            const raw = part.slice(6).trim()
+            if (raw === '[DONE]') continue
+
+            const obj = JSON.parse(raw)
+            if (obj.token) {
+              cursor.insertAdjacentText('beforebegin', obj.token)
+            }
+          }
+        }
+
+        cursor.remove()
 
       } catch (err) {
-        text.textContent = '連線失敗，請稍後再試'
+        textEl.textContent = '連線失敗，請稍後再試'
         card.classList.add('show')
-      } finally {
         loading.classList.remove('show')
+      } finally {
         btn.disabled = false
       }
     }
   </script>
 
 </body>
+
 </html>
