@@ -149,25 +149,18 @@
       align-items: center;
       justify-content: center;
       background-color: #f0f0f0;
-      /* 平常顏色：淺灰 / 白色系 */
       color: #333;
-      /* 文字或圖示顏色 */
       border: 1px solid #ccc;
-      /* 邊框增加立體感 */
       transition: all 0.2s ease;
-      /* 滑鼠互動動畫 */
     }
 
     button:hover:not(:disabled) {
       background-color: #e0e0e0;
-      /* 滑鼠經過變深一點 */
       color: #000;
-      /* 顏色加深 */
     }
 
     button:active:not(:disabled) {
       background-color: #d0d0d0;
-      /* 點擊時再加深 */
     }
 
     button:disabled {
@@ -202,6 +195,14 @@
       animation: pulse 1.2s infinite;
     }
 
+    .dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
     @keyframes pulse {
 
       0%,
@@ -229,11 +230,51 @@
       display: block;
     }
 
+    .answer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
     .answer-label {
       font-size: 12px;
       letter-spacing: 0.18em;
       color: #666;
-      margin-bottom: 20px;
+    }
+
+    /* 重新提問按鈕 */
+    .new-question-btn {
+      width: auto;
+      height: 32px;
+      padding: 0 14px;
+      font-size: 13px;
+      border-radius: 20px;
+      background-color: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .new-question-btn:hover {
+      background-color: var(--bg);
+      color: var(--ink);
+      border-color: #ccc;
+    }
+
+    .new-question-btn:active {
+      background-color: #eee;
+    }
+
+    .new-question-btn svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
     }
 
     .answer-text {
@@ -318,7 +359,7 @@
     <div class="input-wrap">
       <textarea id="question" placeholder="輸入你的投資問題⋯⋯（Shift+Enter換行）" rows="3"></textarea>
       <div class="input-footer">
-        <button id="askBtn" onclick="submitQuestion()">問小豁</button>
+        <button id="askBtn" onclick="submitQuestion()">問</button>
       </div>
     </div>
 
@@ -328,21 +369,19 @@
     </div>
 
     <div class="answer-card" id="answerCard">
-      <div class="answer-label">小豁的回答</div>
+      <div class="answer-header">
+        <div class="answer-label">小豁的回答</div>
+        <button class="new-question-btn" onclick="startNewQuestion()" title="重新提問">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M2 8a6 6 0 1 0 1.5-3.9" />
+            <path d="M2 4v4h4" />
+          </svg>
+          重新提問
+        </button>
+      </div>
       <div class="answer-text" id="answerText"></div>
     </div>
-
-    <!-- <div class="examples">
-      <div class="examples-label">範例問題</div>
-      <div class="chips">
-        <div class="chip" onclick="useExample(this)">股市大跌很恐慌怎麼辦</div>
-        <div class="chip" onclick="useExample(this)">什麼是比較原則</div>
-        <div class="chip" onclick="useExample(this)">遇到黑天鵝怎麼辦</div>
-        <div class="chip" onclick="useExample(this)">為什麼要100%持股</div>
-        <div class="chip" onclick="useExample(this)">賣掉的股票繼續漲，我賣錯了嗎</div>
-        <div class="chip" onclick="useExample(this)">大盤MACD轉負出清策略是什麼</div>
-      </div>
-    </div> -->
 
   </main>
 
@@ -367,6 +406,17 @@
     function useExample(el) {
       textarea.value = el.textContent
       textarea.focus()
+    }
+
+    function startNewQuestion() {
+      // 隱藏回答卡片
+      card.classList.remove('show')
+      textEl.textContent = ''
+      // 清空 textarea 並 focus
+      textarea.value = ''
+      textarea.focus()
+      // 捲回頂部（讓輸入框回到視野）
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     async function submitQuestion() {
