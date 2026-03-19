@@ -28,6 +28,7 @@
       --bg: #f7f6f3;
       --card: #ffffff;
       --accent: #2c2c28;
+      --sidebar-width: 260px;
     }
 
     body {
@@ -39,9 +40,190 @@
       text-rendering: optimizeLegibility;
       font-weight: 400;
       min-height: 100vh;
+    }
+
+    /* ── 側邊欄 ── */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: var(--sidebar-width);
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      z-index: 100;
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-header {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: 13px;
+      letter-spacing: 0.15em;
+      color: #888;
+    }
+
+    .sidebar-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #aaa;
+      padding: 4px;
+      width: auto;
+      height: auto;
+      font-size: 18px;
+      line-height: 1;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar-close:hover {
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .sidebar-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+
+    .sidebar-empty {
+      padding: 32px 20px;
+      font-size: 13px;
+      color: #bbb;
+      text-align: center;
+      line-height: 2;
+    }
+
+    .sidebar-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      border-bottom: 1px solid #f5f5f2;
+      transition: background 0.15s;
+    }
+
+    .sidebar-item:hover {
+      background: var(--bg);
+    }
+
+    .sidebar-item.active {
+      background: #f0efeb;
+    }
+
+    .sidebar-item-q {
+      font-size: 13.5px;
+      color: var(--ink-soft);
+      line-height: 1.6;
+      letter-spacing: 0.01em;
+      /* 最多顯示兩行 */
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .sidebar-item-time {
+      font-size: 11px;
+      color: #bbb;
+      margin-top: 5px;
+      letter-spacing: 0.05em;
+    }
+
+    .sidebar-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .clear-btn {
+      width: 100%;
+      height: 34px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: #aaa;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .clear-btn:hover {
+      background: #fff0f0;
+      color: #c0392b;
+      border-color: #f5c6c6;
+    }
+
+    /* 遮罩 */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.18);
+      z-index: 99;
+    }
+
+    .overlay.show {
+      display: block;
+    }
+
+    /* 歷史按鈕（固定在左上角） */
+    .history-toggle {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 98;
+      width: auto;
+      height: 36px;
+      padding: 0 14px;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      transition: all 0.15s;
+    }
+
+    .history-toggle:hover {
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .history-toggle svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    /* ── 主畫面 ── */
+    .page {
       display: flex;
       flex-direction: column;
       align-items: center;
+      min-height: 100vh;
     }
 
     header {
@@ -262,10 +444,6 @@
       border-color: #ccc;
     }
 
-    .new-question-btn:active {
-      background-color: #eee;
-    }
-
     .new-question-btn svg {
       width: 13px;
       height: 13px;
@@ -310,55 +488,108 @@
       color: #aaa;
       border-top: 1px solid var(--border);
     }
+
+    /* ── 手機版 ── */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 52px;
+      }
+
+      header {
+        padding: 60px 20px 36px;
+      }
+
+      main {
+        padding: 0 20px 80px;
+      }
+
+      .history-toggle span {
+        display: none;
+      }
+
+      .history-toggle {
+        padding: 0 12px;
+      }
+    }
   </style>
 
 </head>
 
 <body>
 
-  <header>
-    <div class="site-label">豁達人生財經室</div>
-    <h1>小豁</h1>
-    <div class="h1-sub">知識助理</div>
-    <div class="divider"></div>
-    <div class="subtitle">
-      基於豁達人生財經室多年文章的知識助理<br>
-      回答內容純屬知識整理，不代表任何投資建議
-    </div>
-  </header>
+  <!-- 側邊欄遮罩 -->
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
-  <main>
-    <div class="input-wrap">
-      <textarea id="question" placeholder="輸入你的投資問題⋯⋯（Shift+Enter換行）"></textarea>
-      <div class="input-footer">
-        <button id="askBtn" onclick="submitQuestion()">問</button>
+  <!-- 側邊欄 -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">歷史記錄</div>
+      <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+    </div>
+    <div class="sidebar-list" id="sidebarList">
+      <div class="sidebar-empty">還沒有對話記錄</div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="clear-btn" onclick="clearHistory()">清除所有記錄</button>
+    </div>
+  </div>
+
+  <!-- 歷史按鈕 -->
+  <button class="history-toggle" onclick="toggleSidebar()">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+      stroke-linejoin="round">
+      <circle cx="8" cy="8" r="6" />
+      <path d="M8 5v3l2 2" />
+    </svg>
+    <span>歷史記錄</span>
+  </button>
+
+  <!-- 主畫面 -->
+  <div class="page">
+    <header>
+      <div class="site-label">豁達人生財經室</div>
+      <h1>小豁</h1>
+      <div class="h1-sub">知識助理</div>
+      <div class="divider"></div>
+      <div class="subtitle">
+        基於豁達人生財經室多年文章的知識助理<br>
+        回答內容純屬知識整理，不代表任何投資建議
       </div>
-    </div>
+    </header>
 
-    <div class="loading" id="loading">
-      <div class="dots"><span></span><span></span><span></span></div>
-      <span>小豁正在思考⋯⋯</span>
-    </div>
-
-    <div class="answer-card" id="answerCard">
-      <div class="answer-header">
-        <div class="answer-label">小豁的回答</div>
-        <button class="new-question-btn" onclick="startNewQuestion()" title="重新提問">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-            stroke-linejoin="round">
-            <path d="M2 8a6 6 0 1 0 1.5-3.9" />
-            <path d="M2 4v4h4" />
-          </svg>
-          重新提問
-        </button>
+    <main>
+      <div class="input-wrap">
+        <textarea id="question" placeholder="輸入你的投資問題⋯⋯（Shift+Enter換行）"></textarea>
+        <div class="input-footer">
+          <button id="askBtn" onclick="submitQuestion()">問</button>
+        </div>
       </div>
-      <div class="answer-text" id="answerText"></div>
-    </div>
-  </main>
 
-  <footer>
-    知識來源：豁達人生財經室
-  </footer>
+      <div class="loading" id="loading">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <span>小豁正在思考⋯⋯</span>
+      </div>
+
+      <div class="answer-card" id="answerCard">
+        <div class="answer-header">
+          <div class="answer-label">小豁的回答</div>
+          <button class="new-question-btn" onclick="startNewQuestion()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M2 8a6 6 0 1 0 1.5-3.9" />
+              <path d="M2 4v4h4" />
+            </svg>
+            重新提問
+          </button>
+        </div>
+        <div class="answer-text" id="answerText"></div>
+      </div>
+    </main>
+
+    <footer>
+      知識來源：豁達人生財經室
+    </footer>
+  </div>
 
   <script>
     const textarea = document.getElementById('question')
@@ -367,13 +598,124 @@
     const card = document.getElementById('answerCard')
     const textEl = document.getElementById('answerText')
 
-    // 自動撐高 textarea
+    // ── localStorage 工具 ──────────────────────────────
+    const STORAGE_KEY = 'xiaohuo_history'
+
+    function loadHistory() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+      } catch {
+        return []
+      }
+    }
+
+    function saveHistory(list) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+    }
+
+    function addToHistory(question, answer) {
+      const list = loadHistory()
+      list.unshift({
+        id: Date.now(),
+        question,
+        answer,
+        time: new Date().toISOString(),
+      })
+      // 最多保留 100 筆
+      saveHistory(list.slice(0, 100))
+      renderSidebar()
+    }
+
+    // ── 側邊欄 ────────────────────────────────────────
+    let activeId = null
+
+    function renderSidebar() {
+      const list = loadHistory()
+      const el = document.getElementById('sidebarList')
+
+      if (list.length === 0) {
+        el.innerHTML = '<div class="sidebar-empty">還沒有對話記錄</div>'
+        return
+      }
+
+      el.innerHTML = list.map(item => `
+        <div class="sidebar-item ${item.id === activeId ? 'active' : ''}"
+             onclick="loadFromHistory(${item.id})">
+          <div class="sidebar-item-q">${escapeHtml(item.question)}</div>
+          <div class="sidebar-item-time">${formatTime(item.time)}</div>
+        </div>
+      `).join('')
+    }
+
+    function loadFromHistory(id) {
+      const list = loadHistory()
+      const item = list.find(i => i.id === id)
+      if (!item) return
+
+      activeId = id
+      renderSidebar()
+
+      // 填入問題
+      textarea.value = item.question
+      textarea.style.height = 'auto'
+      textarea.style.height = textarea.scrollHeight + 'px'
+
+      // 顯示回答
+      textEl.textContent = item.answer
+      textEl.className = 'answer-text'
+      card.classList.add('show')
+      loading.classList.remove('show')
+
+      closeSidebar()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
+    function clearHistory() {
+      if (!confirm('確定要清除所有歷史記錄嗎？')) return
+      localStorage.removeItem(STORAGE_KEY)
+      activeId = null
+      renderSidebar()
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar')
+      if (sidebar.classList.contains('open')) {
+        closeSidebar()
+      } else {
+        sidebar.classList.add('open')
+        document.getElementById('overlay').classList.add('show')
+      }
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open')
+      document.getElementById('overlay').classList.remove('show')
+    }
+
+    // ── 工具 ──────────────────────────────────────────
+    function formatTime(isoStr) {
+      const d = new Date(isoStr)
+      const today = new Date()
+      const isToday = d.toDateString() === today.toDateString()
+      const hhmm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+      if (isToday) return `今天 ${hhmm}`
+      return `${d.getMonth() + 1}/${d.getDate()} ${hhmm}`
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    }
+
+    // ── 主流程 ────────────────────────────────────────
     textarea.addEventListener('input', () => {
       textarea.style.height = 'auto'
       textarea.style.height = textarea.scrollHeight + 'px'
     })
 
-    // Enter 送出，Shift+Enter 換行
     textarea.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault()
@@ -386,6 +728,8 @@
       textEl.textContent = ''
       textarea.value = ''
       textarea.style.height = 'auto'
+      activeId = null
+      renderSidebar()
       textarea.focus()
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
@@ -399,6 +743,9 @@
       card.classList.remove('show')
       textEl.textContent = ''
       textEl.className = 'answer-text'
+      activeId = null
+
+      let fullAnswer = ''
 
       try {
         const res = await fetch('/api/ask', {
@@ -436,15 +783,21 @@
             try {
               const obj = JSON.parse(raw)
               if (obj.token) {
+                fullAnswer += obj.token
                 cursor.insertAdjacentText('beforebegin', obj.token)
               }
             } catch {
-              // 格式異常跳過，不炸掉整個串流
+              // 格式異常跳過
             }
           }
         }
 
         cursor.remove()
+
+        // 串流結束，存入 localStorage
+        if (fullAnswer) {
+          addToHistory(question, fullAnswer)
+        }
 
       } catch (err) {
         textEl.textContent = '連線失敗，請稍後再試'
@@ -455,6 +808,9 @@
         btn.disabled = false
       }
     }
+
+    // 初始化側邊欄
+    renderSidebar()
   </script>
 
 </body>

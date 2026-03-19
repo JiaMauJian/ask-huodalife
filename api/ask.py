@@ -9,6 +9,9 @@ import sys
 import requests as req
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler
+from qa_logger import log_qa
+from dotenv import load_dotenv
+load_dotenv()
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -119,7 +122,6 @@ class handler(BaseHTTPRequestHandler):
                 self._respond_json(400, {"error": "問題不能為空"})
                 return
 
-            # 步驟一二三四：找到相關文章
             index, articles_map = load_data()
             if not index:
                 self._respond_json(500, {"error": "知識庫載入失敗"})
@@ -135,7 +137,7 @@ class handler(BaseHTTPRequestHandler):
             top_ids      = select_top_articles(question, candidates)
             top_articles = fetch_articles(top_ids, articles_map)
 
-            # 步驟五：串流回傳 Sonnet 回答
+            # 先送 header
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream; charset=utf-8")
             self.send_header("Cache-Control", "no-cache")
@@ -143,9 +145,27 @@ class handler(BaseHTTPRequestHandler):
             self._set_cors_headers()
             self.end_headers()
 
+            # 串流 + 同時收集 answer
+            answer_chunks = []
             for chunk in stream_answer(question, top_articles):
                 self.wfile.write(chunk.encode("utf-8"))
                 self.wfile.flush()
+                if chunk.startswith('data: ') and '[DONE]' not in chunk:
+                    try:
+                        obj = json.loads(chunk[6:])
+                        answer_chunks.append(obj.get("token", ""))
+                    except Exception:
+                        pass
+
+            # 串流結束，背景寫 log
+            import threading
+            full_answer = "".join(answer_chunks)
+            threading.Thread(
+                target=log_qa,
+                args=(question, keywords, len(candidates),
+                    top_ids, top_articles, full_answer),
+                daemon=True,
+            ).start()
 
         except Exception as e:
             try:
