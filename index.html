@@ -23,7 +23,7 @@
     :root {
       --ink: #1a1a18;
       --ink-soft: #2a2a28;
-      --muted: #555;
+      --muted: #333;
       --border: #e4e4e0;
       --bg: #f7f6f3;
       --card: #ffffff;
@@ -34,11 +34,9 @@
       background: var(--bg);
       color: var(--ink);
       font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
-
       font-weight: 400;
       min-height: 100vh;
       display: flex;
@@ -48,7 +46,7 @@
 
     header {
       width: 100%;
-      max-width: 720px;
+      max-width: 860px;
       padding: 72px 28px 48px;
       text-align: center;
     }
@@ -93,7 +91,7 @@
 
     main {
       width: 100%;
-      max-width: 720px;
+      max-width: 860px;
       padding: 0 28px 96px;
       flex: 1;
     }
@@ -112,12 +110,15 @@
       background: transparent;
       border: none;
       outline: none;
+      font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
       font-size: 17px;
       font-weight: 400;
       line-height: 1.9;
       letter-spacing: 0.01em;
       resize: none;
-      min-height: 140px;
+      min-height: 56px;
+      max-height: 300px;
+      overflow-y: auto;
     }
 
     textarea::placeholder {
@@ -133,12 +134,6 @@
       border-top: 1px solid #f0f0ec;
     }
 
-    .hint {
-      font-size: 13px;
-      color: #666;
-      letter-spacing: 0.08em;
-    }
-
     button {
       width: 60px;
       height: 40px;
@@ -151,6 +146,7 @@
       background-color: #f0f0f0;
       color: #333;
       border: 1px solid #ccc;
+      cursor: pointer;
       transition: all 0.2s ease;
     }
 
@@ -243,7 +239,6 @@
       color: #666;
     }
 
-    /* 重新提問按鈕 */
     .new-question-btn {
       width: auto;
       height: 32px;
@@ -301,37 +296,14 @@
       }
     }
 
-    .examples {
-      margin-top: 12px;
-    }
-
-    .examples-label {
-      font-size: 12px;
-      letter-spacing: 0.18em;
-      color: #666;
-      margin-bottom: 14px;
-    }
-
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .chip {
-      background: var(--card);
-      border: 1px solid var(--border);
-      font-size: 14.5px;
-      font-weight: 400;
-      padding: 11px 20px;
-      border-radius: 28px;
-      cursor: pointer;
-      letter-spacing: 0.02em;
+    .error-text {
+      color: #c0392b;
+      font-size: 15px;
     }
 
     footer {
       width: 100%;
-      max-width: 720px;
+      max-width: 860px;
       padding: 22px 28px;
       text-align: center;
       font-size: 13px;
@@ -350,14 +322,14 @@
     <div class="h1-sub">知識助理</div>
     <div class="divider"></div>
     <div class="subtitle">
-      基於豁達人生多年月報與投資哲學的知識助理<br>
+      基於豁達人生財經室多年文章的知識助理<br>
       回答內容純屬知識整理，不代表任何投資建議
     </div>
   </header>
 
   <main>
     <div class="input-wrap">
-      <textarea id="question" placeholder="輸入你的投資問題⋯⋯（Shift+Enter換行）" rows="3"></textarea>
+      <textarea id="question" placeholder="輸入你的投資問題⋯⋯（Shift+Enter換行）"></textarea>
       <div class="input-footer">
         <button id="askBtn" onclick="submitQuestion()">問</button>
       </div>
@@ -382,7 +354,6 @@
       </div>
       <div class="answer-text" id="answerText"></div>
     </div>
-
   </main>
 
   <footer>
@@ -396,6 +367,13 @@
     const card = document.getElementById('answerCard')
     const textEl = document.getElementById('answerText')
 
+    // 自動撐高 textarea
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto'
+      textarea.style.height = textarea.scrollHeight + 'px'
+    })
+
+    // Enter 送出，Shift+Enter 換行
     textarea.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault()
@@ -403,19 +381,12 @@
       }
     })
 
-    function useExample(el) {
-      textarea.value = el.textContent
-      textarea.focus()
-    }
-
     function startNewQuestion() {
-      // 隱藏回答卡片
       card.classList.remove('show')
       textEl.textContent = ''
-      // 清空 textarea 並 focus
       textarea.value = ''
+      textarea.style.height = 'auto'
       textarea.focus()
-      // 捲回頂部（讓輸入框回到視野）
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
@@ -427,6 +398,7 @@
       loading.classList.add('show')
       card.classList.remove('show')
       textEl.textContent = ''
+      textEl.className = 'answer-text'
 
       try {
         const res = await fetch('/api/ask', {
@@ -434,6 +406,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question })
         })
+
+        if (!res.ok) throw new Error(`Server error: ${res.status}`)
 
         const reader = res.body.getReader()
         const decoder = new TextDecoder()
@@ -451,7 +425,6 @@
           if (done) break
 
           buffer += decoder.decode(value, { stream: true })
-
           const parts = buffer.split('\n\n')
           buffer = parts.pop()
 
@@ -460,9 +433,13 @@
             const raw = part.slice(6).trim()
             if (raw === '[DONE]') continue
 
-            const obj = JSON.parse(raw)
-            if (obj.token) {
-              cursor.insertAdjacentText('beforebegin', obj.token)
+            try {
+              const obj = JSON.parse(raw)
+              if (obj.token) {
+                cursor.insertAdjacentText('beforebegin', obj.token)
+              }
+            } catch {
+              // 格式異常跳過，不炸掉整個串流
             }
           }
         }
@@ -471,6 +448,7 @@
 
       } catch (err) {
         textEl.textContent = '連線失敗，請稍後再試'
+        textEl.className = 'answer-text error-text'
         card.classList.add('show')
         loading.classList.remove('show')
       } finally {
