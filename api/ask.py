@@ -17,7 +17,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from blog_qa import (
     expand_keywords, search_candidates,
     select_top_articles, fetch_articles,
-    load_data, API_KEY, SONNET
+    load_data, build_prompt,
+    API_KEY, SONNET
 )
 from qa_logger import log_qa
 
@@ -29,45 +30,7 @@ def stream_answer(question: str, articles: list):
         yield 'data: [DONE]\n\n'
         return
 
-    # 組參考文章區塊
-    article_blocks = ""
-    for i, art in enumerate(articles, 1):
-        content = art.get("content", "")
-        if len(content) > 6000:
-            content = content[:6000] + "...(以下略)"
-        article_blocks += (
-            f"文章{i}：{art.get('title', '')}（{art.get('date', '')}）\n"
-            f"連結：{art.get('url', '')}\n"
-            f"{content}\n\n"
-            f"{'─'*40}\n\n"
-        )
-
-    # 載入 soul.md
-    soul = ""
-    soul_path = Path(__file__).parent.parent / "soul.md"
-    if soul_path.exists():
-        with open(soul_path, "r", encoding="utf-8") as f:
-            soul = f.read()
-
-    prompt = f"""{soul}
-
-請根據以下文章內容回答使用者問題。
-
-回答規則：
-- 只根據提供的文章內容回答，不要加入文章以外的觀點
-- 如果新舊文章觀點有衝突，以新文章為準，並說明觀點的演變
-- 回答時自然地標明觀點來自豁達人生的文章，不需要每次都用固定開頭，避免重複
-- 如果觀點來自書籍引用，請明確說明「根據《書名》」
-- 如果文章裡沒有相關內容，直接說不知道，不要自行發揮
-- 用繁體中文回答
-- 不要使用 Markdown 格式，不要用表格、粗體、連結語法，純文字回答
-- 回答末尾必須完整列出所有提供給你的參考文章標題和連結，不管有沒有引用到都要全部列出，一篇都不能少
-
-【參考文章】
-
-{article_blocks}
-【使用者問題】
-{question}"""
+    prompt = build_prompt(question, articles)
 
     resp = req.post(
         "https://api.anthropic.com/v1/messages",
@@ -136,7 +99,6 @@ class handler(BaseHTTPRequestHandler):
             top_ids      = select_top_articles(question, candidates)
             top_articles = fetch_articles(top_ids, articles_map)
 
-            # 先送 header
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream; charset=utf-8")
             self.send_header("Cache-Control", "no-cache")
@@ -144,7 +106,6 @@ class handler(BaseHTTPRequestHandler):
             self._set_cors_headers()
             self.end_headers()
 
-            # 串流 + 同時收集 answer
             answer_chunks = []
             for chunk in stream_answer(question, top_articles):
                 self.wfile.write(chunk.encode("utf-8"))
@@ -156,7 +117,6 @@ class handler(BaseHTTPRequestHandler):
                     except Exception:
                         pass
 
-            # 串流結束，直接寫 log
             full_answer = "".join(answer_chunks)
             log_qa(
                 question=question,
@@ -196,4 +156,4 @@ class handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
 
     def log_message(self, format, *args):
-        pass  # 關閉預設 log
+        pass

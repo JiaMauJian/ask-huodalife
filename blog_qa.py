@@ -81,9 +81,7 @@ def search_candidates(keywords: list, index: list, question: str = "") -> list:
     """用關鍵字比對摘要，回傳候選文章清單
     同時也用原始問題的字直接比對，避免關鍵字擴充方向偏差
     """
-    # 把原始問題也拆成 2 字以上的詞加入比對
     question_words = [question[i:i+2] for i in range(len(question) - 1)] if question else []
-
     all_keywords = list(set(keywords + question_words))
 
     scored = []
@@ -93,7 +91,6 @@ def search_candidates(keywords: list, index: list, question: str = "") -> list:
         if score > 0:
             scored.append((score, entry))
 
-    # 依分數排序，取前 N 篇
     scored.sort(key=lambda x: x[0], reverse=True)
     return [entry for _, entry in scored[:CANDIDATE_COUNT]]
 
@@ -103,7 +100,6 @@ def select_top_articles(question: str, candidates: list) -> list:
     if not candidates:
         return []
 
-    # 組候選清單文字
     candidate_text = ""
     for c in candidates:
         candidate_text += (
@@ -129,22 +125,20 @@ def select_top_articles(question: str, candidates: list) -> list:
 def fetch_articles(ids: list, articles_map: dict) -> list:
     result = []
     for art_id in ids:
-        art_id = art_id.strip()  # 清除多餘空白或換行
+        art_id = art_id.strip()
         if art_id in articles_map:
             result.append(articles_map[art_id])
     return result
 
 
-# ── 步驟五：Sonnet 正式回答 ──────────────────────────────
-def generate_answer(question: str, articles: list) -> str:
-    if not articles:
-        return "抱歉，找不到相關文章，無法回答這個問題。"
+# ── 共用 prompt 組裝 ─────────────────────────────────────
+def build_prompt(question: str, articles: list) -> str:
+    """組裝給 Sonnet 的完整 prompt，供本地和 API 共用"""
 
     # 組參考文章區塊
     article_blocks = ""
     for i, art in enumerate(articles, 1):
         content = art.get("content", "")
-        # 內容太長就截斷
         if len(content) > 6000:
             content = content[:6000] + "...(以下略)"
         article_blocks += (
@@ -157,43 +151,55 @@ def generate_answer(question: str, articles: list) -> str:
     # 載入靈魂設定
     soul = ""
     soul_path = Path("soul.md")
+    if not soul_path.exists():
+        # api/ 子目錄執行時往上找
+        soul_path = Path(__file__).parent / "soul.md"
     if soul_path.exists():
         with open(soul_path, "r", encoding="utf-8") as f:
             soul = f.read()
 
-    prompt = f"""{soul}
+    return f"""{soul}
 
-    請根據以下文章內容回答使用者問題。
+請根據以下文章內容回答使用者問題。
 
-    回答規則：
-    - 只根據提供的文章內容回答，不要加入文章以外的觀點
-    - 如果新舊文章觀點有衝突，以新文章為準，並說明觀點的演變
-    - 回答時清楚標明觀點來自豁達人生的文章，例如「根據豁達人生財經室的文章...」
-    - 如果觀點來自書籍引用，請明確說明「根據《書名》」
-    - 如果文章裡沒有相關內容，直接說不知道，不要自行發揮
-    - 用繁體中文回答
-    - 不要使用 Markdown 格式，不要用表格、粗體、連結語法，純文字回答
-    - 回答末尾必須完整列出所有提供給你的參考文章標題和連結，不管有沒有引用到都要全部列出，一篇都不能少
+回答規則：
+- 只根據提供的文章內容回答，不要加入文章以外的觀點
+- 如果新舊文章觀點有衝突，以新文章為準，並說明觀點的演變
+- 回答時自然地標明觀點來自豁達人生的文章，不需要每次都用固定開頭，避免重複
+- 如果觀點來自書籍引用，請明確說明「根據《書名》」
+- 如果文章裡沒有相關內容，直接說不知道，不要自行發揮
+- 用繁體中文回答
+- 不要使用 Markdown 格式，不要用表格、粗體、連結語法，純文字回答
+- 回答末尾統一用以下格式列出所有參考文章，不管有沒有引用到都要全部列出，一篇都不能少，不加日期，不加編號：
 
-    【參考文章】
+參考文章：
+標題
+連結
 
-    {article_blocks}
-    【使用者問題】
-    {question}"""
+【參考文章】
 
+{article_blocks}
+【使用者問題】
+{question}"""
+
+
+# ── 步驟五：Sonnet 正式回答 ──────────────────────────────
+def generate_answer(question: str, articles: list) -> str:
+    if not articles:
+        return "抱歉，找不到相關文章，無法回答這個問題。"
+
+    prompt = build_prompt(question, articles)
     return call_claude(SONNET, prompt, max_tokens=1000)
 
 
 # ── 載入資料 ─────────────────────────────────────────────
 def load_data() -> tuple:
-    # 載入索引
     if not Path(INDEX_FILE).exists():
         print(f"❌ 找不到 {INDEX_FILE}")
         return [], {}
     with open(INDEX_FILE, "r", encoding="utf-8") as f:
         index = json.load(f)
 
-    # 載入文章（轉成 id -> article 的 dict 方便查詢）
     if not Path(ARTICLES_FILE).exists():
         print(f"❌ 找不到 {ARTICLES_FILE}")
         return index, {}
@@ -201,7 +207,6 @@ def load_data() -> tuple:
         articles_list = json.load(f)
     articles_map = {a["id"]: a for a in articles_list}
 
-    # special/ 也加進來
     special_path = Path("special")
     if special_path.exists():
         for json_file in special_path.glob("*.json"):
@@ -226,12 +231,10 @@ def ask(question: str, verbose: bool = True) -> str:
         print(f"\n❓ 問題：{question}")
         print(f"\n{'─'*50}")
 
-    # 步驟一：擴充關鍵字
     keywords = expand_keywords(question)
     if verbose:
         print(f"🔑 關鍵字：{', '.join(keywords)}")
 
-    # 步驟二：關鍵字比對
     candidates = search_candidates(keywords, index, question)
     if verbose:
         print(f"📋 候選文章：{len(candidates)} 篇")
@@ -239,18 +242,15 @@ def ask(question: str, verbose: bool = True) -> str:
     if not candidates:
         return "抱歉，知識庫中找不到相關內容。"
 
-    # 步驟三：Haiku 選出最相關 id
     top_ids = select_top_articles(question, candidates)
     if verbose:
         print(f"✅ 選出文章 id：{top_ids}")
 
-    # 步驟四：撈完整內容
     top_articles = fetch_articles(top_ids, articles_map)
     if verbose:
         print(f"📄 載入 {len(top_articles)} 篇完整文章")
         print(f"\n{'─'*50}\n")
 
-    # 步驟五：Sonnet 回答
     answer = generate_answer(question, top_articles)
     return answer
 
@@ -261,7 +261,6 @@ def main():
         print("❌ 未設定 ANTHROPIC_API_KEY")
         return
 
-    # 從命令列參數取問題，或進入互動模式
     if len(sys.argv) > 1:
         question = " ".join(sys.argv[1:])
         answer = ask(question)
