@@ -723,14 +723,23 @@
 
     // ── URL 轉超連結 ──────────────────────────────────
     function linkify(text) {
-      const escaped = escapeHtml(text)
-      // 先處理 markdown 連結語法 [文字](網址)
-      const withMarkdown = escaped.replace(
-        /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
-        (_, label, url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`
-      )
-      // 剩下裸露的 URL 也轉成超連結（等後端改好再移除這行）
-      return withMarkdown.replace(/(https?:\/\/[^\s\u3000\uff09\u0029\]<]+)/g, url => {
+      // 先處理 markdown 連結語法 [文字](網址)，在 escape 之前
+      const parts = []
+      let last = 0
+      const mdRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g
+      let match
+      while ((match = mdRegex.exec(text)) !== null) {
+        // escape 連結前面的純文字
+        parts.push(escapeHtml(text.slice(last, match.index)))
+        // 連結本身直接組 <a>，不 escape
+        parts.push(`<a href="${match[2]}" target="_blank" rel="noopener noreferrer">${escapeHtml(match[1])}</a>`)
+        last = match.index + match[0].length
+      }
+      // escape 剩餘純文字
+      parts.push(escapeHtml(text.slice(last)))
+
+      // 再把剩下裸露的 URL 轉成超連結
+      return parts.join('').replace(/(https?:\/\/[^\s\u3000\uff09\u0029\]<"]+)/g, url => {
         return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
       })
     }
