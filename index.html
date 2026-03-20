@@ -723,23 +723,27 @@
 
     // ── URL 轉超連結 ──────────────────────────────────
     function linkify(text) {
-      // 先處理 markdown 連結語法 [文字](網址)，在 escape 之前
+      // 預處理：把 Sonnet 可能輸出的 HTML <a> 標籤先轉成 markdown 格式
+      const preProcessed = text.replace(
+        /<a\s+href="(https?:\/\/[^"]+)"[^>]*>(.*?)<\/a>/gi,
+        (_, url, label) => `[${label.trim()}](${url})`
+      )
+
+      // 處理 markdown 連結語法 [文字](網址)，在 escape 之前
+      // 標題允許任意字元（除了 ] 本身）
       const parts = []
       let last = 0
       const mdRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g
       let match
-      while ((match = mdRegex.exec(text)) !== null) {
-        // escape 連結前面的純文字
-        parts.push(escapeHtml(text.slice(last, match.index)))
-        // 連結本身直接組 <a>，不 escape
+      while ((match = mdRegex.exec(preProcessed)) !== null) {
+        parts.push(escapeHtml(preProcessed.slice(last, match.index)))
         parts.push(`<a href="${match[2]}" target="_blank" rel="noopener noreferrer">${escapeHtml(match[1])}</a>`)
         last = match.index + match[0].length
       }
-      // escape 剩餘純文字
-      parts.push(escapeHtml(text.slice(last)))
+      parts.push(escapeHtml(preProcessed.slice(last)))
 
-      // 再把剩下裸露的 URL 轉成超連結
-      return parts.join('').replace(/(https?:\/\/[^\s\u3000\uff09\u0029\]<"]+)/g, url => {
+      // 剩下裸露的 URL 也轉成超連結（排除已在 href 裡的）
+      return parts.join('').replace(/(?<!href=")(https?:\/\/[^\s\u3000\uff09\u0029\]<"]+)/g, url => {
         return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
       })
     }
