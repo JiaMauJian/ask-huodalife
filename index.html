@@ -132,7 +132,6 @@
       color: var(--ink-soft);
       line-height: 1.6;
       letter-spacing: 0.01em;
-      /* 最多顯示兩行 */
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -184,7 +183,7 @@
       display: block;
     }
 
-    /* 歷史按鈕（固定在左上角） */
+    /* 歷史按鈕 */
     .history-toggle {
       position: fixed;
       top: 20px;
@@ -457,6 +456,20 @@
       font-weight: 400;
       letter-spacing: 0.01em;
       white-space: pre-wrap;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+
+    .answer-text a {
+      color: #555;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      word-break: break-all;
+      overflow-wrap: break-word;
+    }
+
+    .answer-text a:hover {
+      color: var(--ink);
     }
 
     .cursor {
@@ -621,7 +634,6 @@
         answer,
         time: new Date().toISOString(),
       })
-      // 最多保留 100 筆
       saveHistory(list.slice(0, 100))
       renderSidebar()
     }
@@ -655,13 +667,12 @@
       activeId = id
       renderSidebar()
 
-      // 填入問題
       textarea.value = item.question
       textarea.style.height = 'auto'
       textarea.style.height = textarea.scrollHeight + 'px'
 
-      // 顯示回答
-      textEl.textContent = item.answer
+      // 用 linkify 渲染，讓歷史記錄也有超連結
+      textEl.innerHTML = linkify(item.answer)
       textEl.className = 'answer-text'
       card.classList.add('show')
       loading.classList.remove('show')
@@ -710,6 +721,18 @@
         .replace(/"/g, '&quot;')
     }
 
+    // ── URL 轉超連結 ──────────────────────────────────
+    function linkify(text) {
+      const escaped = escapeHtml(text)
+      // 先處理 markdown 連結語法 [文字](網址)
+      const withMarkdown = escaped.replace(
+        /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+        (_, label, url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`
+      )
+      // 剩下裸露的 URL 不渲染（已被 markdown 語法包住的不會再被匹配）
+      return withMarkdown.replace(/(https?:\/\/[^\s\u3000\uff09\u0029\]<]+)/g, '')
+    }
+
     // ── 主流程 ────────────────────────────────────────
     textarea.addEventListener('input', () => {
       textarea.style.height = 'auto'
@@ -725,7 +748,7 @@
 
     function startNewQuestion() {
       card.classList.remove('show')
-      textEl.textContent = ''
+      textEl.innerHTML = ''
       textarea.value = ''
       textarea.style.height = 'auto'
       activeId = null
@@ -741,7 +764,7 @@
       btn.disabled = true
       loading.classList.add('show')
       card.classList.remove('show')
-      textEl.textContent = ''
+      textEl.innerHTML = ''
       textEl.className = 'answer-text'
       activeId = null
 
@@ -763,6 +786,7 @@
         card.classList.add('show')
         loading.classList.remove('show')
 
+        // 串流期間用純文字 + 游標
         const cursor = document.createElement('span')
         cursor.className = 'cursor'
         textEl.appendChild(cursor)
@@ -792,10 +816,10 @@
           }
         }
 
+        // 串流結束：移除游標，改用 linkify 渲染（URL 變超連結）
         cursor.remove()
-
-        // 串流結束，存入 localStorage
         if (fullAnswer) {
+          textEl.innerHTML = linkify(fullAnswer)
           addToHistory(question, fullAnswer)
         }
 
