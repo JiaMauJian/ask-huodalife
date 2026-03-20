@@ -32,6 +32,13 @@ SONNET        = "claude-sonnet-4-6"
 CANDIDATE_COUNT = 20   # 關鍵字比對後最多保留幾篇候選
 TOP_K           = 3    # 最終選幾篇餵給 Sonnet 回答
 
+NO_RESULT_MSG = """這個問題在豁達人生的文章裡找不到直接相關的內容。
+
+你可以直接到以下地方找看看：
+
+豁達人生財經室部落格：https://huodalife.pixnet.net/blog
+豁達人生財經室 YouTube：https://www.youtube.com/@豁達人生財經室"""
+
 
 # ── API 呼叫 ─────────────────────────────────────────────
 def call_claude(model: str, prompt: str, max_tokens: int = 1000) -> str:
@@ -135,7 +142,6 @@ def fetch_articles(ids: list, articles_map: dict) -> list:
 def build_prompt(question: str, articles: list) -> str:
     """組裝給 Sonnet 的完整 prompt，供本地和 API 共用"""
 
-    # 組參考文章區塊
     article_blocks = ""
     for i, art in enumerate(articles, 1):
         content = art.get("content", "")
@@ -148,11 +154,9 @@ def build_prompt(question: str, articles: list) -> str:
             f"{'─'*40}\n\n"
         )
 
-    # 載入靈魂設定
     soul = ""
     soul_path = Path("soul.md")
     if not soul_path.exists():
-        # api/ 子目錄執行時往上找
         soul_path = Path(__file__).parent / "soul.md"
     if soul_path.exists():
         with open(soul_path, "r", encoding="utf-8") as f:
@@ -186,10 +190,10 @@ def build_prompt(question: str, articles: list) -> str:
 # ── 步驟五：Sonnet 正式回答 ──────────────────────────────
 def generate_answer(question: str, articles: list) -> str:
     if not articles:
-        return "抱歉，找不到相關文章，無法回答這個問題。"
+        return NO_RESULT_MSG
 
     prompt = build_prompt(question, articles)
-    return call_claude(SONNET, prompt, max_tokens=1000)
+    return call_claude(SONNET, prompt, max_tokens=2000)
 
 
 # ── 載入資料 ─────────────────────────────────────────────
@@ -240,7 +244,7 @@ def ask(question: str, verbose: bool = True) -> str:
         print(f"📋 候選文章：{len(candidates)} 篇")
 
     if not candidates:
-        return "抱歉，知識庫中找不到相關內容。"
+        return NO_RESULT_MSG
 
     top_ids = select_top_articles(question, candidates)
     if verbose:

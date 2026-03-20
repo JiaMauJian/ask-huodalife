@@ -18,7 +18,7 @@ from blog_qa import (
     expand_keywords, search_candidates,
     select_top_articles, fetch_articles,
     load_data, build_prompt,
-    API_KEY, SONNET
+    API_KEY, SONNET, NO_RESULT_MSG
 )
 from qa_logger import log_qa
 
@@ -26,7 +26,7 @@ from qa_logger import log_qa
 def stream_answer(question: str, articles: list):
     """呼叫 Anthropic API 串流版，yield SSE 格式的文字片段"""
     if not articles:
-        yield 'data: {"token": "抱歉，找不到相關文章，無法回答這個問題。"}\n\n'
+        yield f'data: {json.dumps({"token": NO_RESULT_MSG}, ensure_ascii=False)}\n\n'
         yield 'data: [DONE]\n\n'
         return
 
@@ -41,7 +41,7 @@ def stream_answer(question: str, articles: list):
         },
         json={
             "model":      SONNET,
-            "max_tokens": 1500,
+            "max_tokens": 2000,
             "stream":     True,
             "messages":   [{"role": "user", "content": prompt}],
         },
@@ -93,7 +93,7 @@ class handler(BaseHTTPRequestHandler):
             candidates   = search_candidates(keywords, index, question)
 
             if not candidates:
-                self._respond_json(200, {"answer": "抱歉，知識庫中找不到相關內容。"})
+                self._stream_no_result()
                 return
 
             top_ids      = select_top_articles(question, candidates)
@@ -135,6 +135,19 @@ class handler(BaseHTTPRequestHandler):
                 self.wfile.flush()
             except Exception:
                 pass
+
+    def _stream_no_result(self):
+        """找不到候選文章時，串流回傳引導訊息"""
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("X-Accel-Buffering", "no")
+        self._set_cors_headers()
+        self.end_headers()
+        msg = f'data: {json.dumps({"token": NO_RESULT_MSG}, ensure_ascii=False)}\n\n'
+        self.wfile.write(msg.encode("utf-8"))
+        self.wfile.write(b'data: [DONE]\n\n')
+        self.wfile.flush()
 
     def do_OPTIONS(self):
         self.send_response(200)
