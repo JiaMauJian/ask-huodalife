@@ -29,12 +29,19 @@ API_KEY       = os.environ.get("ANTHROPIC_API_KEY", "")
 HAIKU         = "claude-haiku-4-5-20251001"
 SONNET        = "claude-sonnet-4-6"
 
-CANDIDATE_COUNT = 20   # 關鍵字比對後最多保留幾篇候選
-TOP_K           = 3    # 最終選幾篇餵給 Sonnet 回答
+CANDIDATE_COUNT = 20
+TOP_K           = 3
 
 NO_RESULT_MSG = """這個問題在豁達人生的文章裡找不到直接相關的內容。
 
 你可以直接到以下地方找看看：
+
+[豁達人生財經室部落格](https://huodalife.pixnet.net/blog)
+[豁達人生財經室 YouTube](https://www.youtube.com/@豁達人生財經室)"""
+
+SERVICE_ERROR_MSG = """服務暫時無法使用，請稍後再試。
+
+如果問題持續發生，可以直接到以下地方找看看：
 
 [豁達人生財經室部落格](https://huodalife.pixnet.net/blog)
 [豁達人生財經室 YouTube](https://www.youtube.com/@豁達人生財經室)"""
@@ -58,10 +65,15 @@ def call_claude(model: str, prompt: str, max_tokens: int = 1000) -> str:
             timeout=60,
         )
         data = resp.json()
+        if data.get("type") == "error":
+            error_type = data.get("error", {}).get("type", "")
+            error_msg  = data.get("error", {}).get("message", "未知錯誤")
+            print(f"❌ Anthropic API 錯誤：{error_msg}")
+            raise Exception(f"{error_type}:{error_msg}")
         return data["content"][0]["text"].strip()
     except Exception as e:
         print(f"❌ API 錯誤：{e}")
-        return ""
+        raise
 
 
 # ── 步驟一：擴充關鍵字 ───────────────────────────────────
@@ -85,9 +97,6 @@ def expand_keywords(question: str) -> list:
 
 # ── 步驟二：關鍵字比對摘要索引 ──────────────────────────
 def search_candidates(keywords: list, index: list, question: str = "") -> list:
-    """用關鍵字比對摘要，回傳候選文章清單
-    同時也用原始問題的字直接比對，避免關鍵字擴充方向偏差
-    """
     question_words = [question[i:i+2] for i in range(len(question) - 1)] if question else []
     all_keywords = list(set(keywords + question_words))
 
@@ -140,8 +149,6 @@ def fetch_articles(ids: list, articles_map: dict) -> list:
 
 # ── 共用 prompt 組裝 ─────────────────────────────────────
 def build_prompt(question: str, articles: list) -> str:
-    """組裝給 Sonnet 的完整 prompt，供本地和 API 共用"""
-
     article_blocks = ""
     for i, art in enumerate(articles, 1):
         content = art.get("content", "")
@@ -237,7 +244,11 @@ def ask(question: str, verbose: bool = True) -> str:
         print(f"\n❓ 問題：{question}")
         print(f"\n{'─'*50}")
 
-    keywords = expand_keywords(question)
+    try:
+        keywords = expand_keywords(question)
+    except Exception:
+        return SERVICE_ERROR_MSG
+
     if verbose:
         print(f"🔑 關鍵字：{', '.join(keywords)}")
 
@@ -248,7 +259,11 @@ def ask(question: str, verbose: bool = True) -> str:
     if not candidates:
         return NO_RESULT_MSG
 
-    top_ids = select_top_articles(question, candidates)
+    try:
+        top_ids = select_top_articles(question, candidates)
+    except Exception:
+        return SERVICE_ERROR_MSG
+
     if verbose:
         print(f"✅ 選出文章 id：{top_ids}")
 
@@ -257,7 +272,11 @@ def ask(question: str, verbose: bool = True) -> str:
         print(f"📄 載入 {len(top_articles)} 篇完整文章")
         print(f"\n{'─'*50}\n")
 
-    answer = generate_answer(question, top_articles)
+    try:
+        answer = generate_answer(question, top_articles)
+    except Exception:
+        return SERVICE_ERROR_MSG
+
     return answer
 
 

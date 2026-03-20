@@ -18,9 +18,11 @@ from blog_qa import (
     expand_keywords, search_candidates,
     select_top_articles, fetch_articles,
     load_data, build_prompt,
-    API_KEY, SONNET, NO_RESULT_MSG
+    API_KEY, SONNET, NO_RESULT_MSG, SERVICE_ERROR_MSG
 )
 from qa_logger import log_qa
+
+STREAM_ERROR_MSG = SERVICE_ERROR_MSG
 
 
 def stream_answer(question: str, articles: list):
@@ -32,22 +34,27 @@ def stream_answer(question: str, articles: list):
 
     prompt = build_prompt(question, articles)
 
-    resp = req.post(
-        "https://api.anthropic.com/v1/messages",
-        headers={
-            "Content-Type":      "application/json",
-            "x-api-key":         API_KEY,
-            "anthropic-version": "2023-06-01",
-        },
-        json={
-            "model":      SONNET,
-            "max_tokens": 2000,
-            "stream":     True,
-            "messages":   [{"role": "user", "content": prompt}],
-        },
-        stream=True,
-        timeout=60,
-    )
+    try:
+        resp = req.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "Content-Type":      "application/json",
+                "x-api-key":         API_KEY,
+                "anthropic-version": "2023-06-01",
+            },
+            json={
+                "model":      SONNET,
+                "max_tokens": 2000,
+                "stream":     True,
+                "messages":   [{"role": "user", "content": prompt}],
+            },
+            stream=True,
+            timeout=60,
+        )
+    except Exception:
+        yield f'data: {json.dumps({"token": STREAM_ERROR_MSG}, ensure_ascii=False)}\n\n'
+        yield 'data: [DONE]\n\n'
+        return
 
     for line in resp.iter_lines():
         if not line:
@@ -60,6 +67,10 @@ def stream_answer(question: str, articles: list):
             break
         try:
             event = json.loads(raw)
+            if event.get("type") == "error":
+                yield f'data: {json.dumps({"token": STREAM_ERROR_MSG}, ensure_ascii=False)}\n\n'
+                yield 'data: [DONE]\n\n'
+                return
             if event.get("type") == "content_block_delta":
                 token = event.get("delta", {}).get("text", "")
                 if token:
@@ -89,14 +100,24 @@ class handler(BaseHTTPRequestHandler):
                 self._respond_json(500, {"error": "知識庫載入失敗"})
                 return
 
-            keywords     = expand_keywords(question)
-            candidates   = search_candidates(keywords, index, question)
-
-            if not candidates:
-                self._stream_no_result()
+            try:
+                keywords = expand_keywords(question)
+            except Exception:
+                self._stream_msg(STREAM_ERROR_MSG)
                 return
 
-            top_ids      = select_top_articles(question, candidates)
+            candidates = search_candidates(keywords, index, question)
+
+            if not candidates:
+                self._stream_msg(NO_RESULT_MSG)
+                return
+
+            try:
+                top_ids = select_top_articles(question, candidates)
+            except Exception:
+                self._stream_msg(STREAM_ERROR_MSG)
+                return
+
             top_articles = fetch_articles(top_ids, articles_map)
 
             self.send_response(200)
@@ -136,16 +157,16 @@ class handler(BaseHTTPRequestHandler):
             except Exception:
                 pass
 
-    def _stream_no_result(self):
-        """找不到候選文章時，串流回傳引導訊息"""
+    def _stream_msg(self, msg: str):
+        """串流回傳任意訊息"""
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream; charset=utf-8")
         self.send_header("Cache-Control", "no-cache")
         self.send_header("X-Accel-Buffering", "no")
         self._set_cors_headers()
         self.end_headers()
-        msg = f'data: {json.dumps({"token": NO_RESULT_MSG}, ensure_ascii=False)}\n\n'
-        self.wfile.write(msg.encode("utf-8"))
+        payload = f'data: {json.dumps({"token": msg}, ensure_ascii=False)}\n\n'
+        self.wfile.write(payload.encode("utf-8"))
         self.wfile.write(b'data: [DONE]\n\n')
         self.wfile.flush()
 
