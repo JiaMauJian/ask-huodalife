@@ -729,8 +729,10 @@
         /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
         (_, label, url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`
       )
-      // 剩下裸露的 URL 不渲染（已被 markdown 語法包住的不會再被匹配）
-      return withMarkdown.replace(/(https?:\/\/[^\s\u3000\uff09\u0029\]<]+)/g, '')
+      // 剩下裸露的 URL 也轉成超連結（等後端改好再移除這行）
+      return withMarkdown.replace(/(https?:\/\/[^\s\u3000\uff09\u0029\]<]+)/g, url => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
+      })
     }
 
     // ── 主流程 ────────────────────────────────────────
