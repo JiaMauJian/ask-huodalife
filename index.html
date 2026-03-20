@@ -40,11 +40,18 @@
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
       font-weight: 400;
-      /* 讓 body 高度跟著 viewport 走，不撐高 */
-      height: 100dvh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* 手機版：鎖住 viewport，固定底部輸入列 */
+    @media (max-width: 600px) {
+      body {
+        height: 100dvh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: unset;
+      }
     }
 
     /* ════════════════════════════════════
@@ -228,12 +235,14 @@
     /* ════════════════════════════════════
        捲動區域（header + 對話）
     ════════════════════════════════════ */
-    .scroll-area {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      /* 底部留出輸入列的空間 */
-      padding-bottom: 16px;
+    /* 桌機：正常文件流 */
+    @media (max-width: 600px) {
+      .scroll-area {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 16px;
+      }
     }
 
     /* ── Header（精簡，只在空白狀態顯示完整版） ── */
@@ -459,13 +468,20 @@
     /* ════════════════════════════════════
        固定底部輸入列
     ════════════════════════════════════ */
+    /* 桌機：輸入列跟著內容自然排列 */
     .input-bar {
-      flex-shrink: 0;
       background: var(--bg);
       border-top: 1px solid var(--border);
-      padding: 12px 16px 12px;
-      /* 安全區域（iPhone home bar） */
-      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      padding: 20px 24px 32px;
+    }
+
+    /* 手機：固定在底部，鍵盤上方 */
+    @media (max-width: 600px) {
+      .input-bar {
+        flex-shrink: 0;
+        padding: 12px 16px;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      }
     }
 
     .input-inner {
