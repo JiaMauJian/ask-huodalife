@@ -47,7 +47,7 @@ SERVICE_ERROR_MSG = """服務暫時無法使用，請稍後再試。
 [豁達人生財經室 YouTube](https://www.youtube.com/@豁達人生財經室)"""
 
 
-# ── API 呼叫 ─────────────────────────────────────────────
+# ── API 呼叫（Haiku，不需要 cache）────────────────────────
 def call_claude(model: str, prompt: str, max_tokens: int = 1000) -> str:
     try:
         resp = requests.post(
@@ -61,6 +61,45 @@ def call_claude(model: str, prompt: str, max_tokens: int = 1000) -> str:
                 "model":      model,
                 "max_tokens": max_tokens,
                 "messages":   [{"role": "user", "content": prompt}],
+            },
+            timeout=60,
+        )
+        data = resp.json()
+        if data.get("type") == "error":
+            error_type = data.get("error", {}).get("type", "")
+            error_msg  = data.get("error", {}).get("message", "未知錯誤")
+            print(f"❌ Anthropic API 錯誤：{error_msg}")
+            raise Exception(f"{error_type}:{error_msg}")
+        return data["content"][0]["text"].strip()
+    except Exception as e:
+        print(f"❌ API 錯誤：{e}")
+        raise
+
+
+# ── API 呼叫（Sonnet，使用 prompt cache）─────────────────
+def call_claude_with_cache(soul: str, prompt: str, max_tokens: int = 2000) -> str:
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "Content-Type":      "application/json",
+                "x-api-key":         API_KEY,
+                "anthropic-version": "2023-06-01",
+                "anthropic-beta":    "prompt-caching-2024-07-31",
+            },
+            json={
+                "model":      SONNET,
+                "max_tokens": max_tokens,
+                "system": [
+                    {
+                        "type":          "text",
+                        "text":          soul,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
             },
             timeout=60,
         )
@@ -147,8 +186,21 @@ def fetch_articles(ids: list, articles_map: dict) -> list:
     return result
 
 
+# ── 載入 soul.md ─────────────────────────────────────────
+def load_soul() -> str:
+    soul_path = Path("soul.md")
+    if not soul_path.exists():
+        soul_path = Path(__file__).parent / "soul.md"
+    if soul_path.exists():
+        with open(soul_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return ""
+
+
 # ── 共用 prompt 組裝 ─────────────────────────────────────
-def build_prompt(question: str, articles: list) -> str:
+def build_prompt(question: str, articles: list) -> tuple:
+    """回傳 (soul, prompt)，soul 用於 cache，prompt 是 user message"""
+
     article_blocks = ""
     for i, art in enumerate(articles, 1):
         content = art.get("content", "")
@@ -161,17 +213,9 @@ def build_prompt(question: str, articles: list) -> str:
             f"{'─'*40}\n\n"
         )
 
-    soul = ""
-    soul_path = Path("soul.md")
-    if not soul_path.exists():
-        soul_path = Path(__file__).parent / "soul.md"
-    if soul_path.exists():
-        with open(soul_path, "r", encoding="utf-8") as f:
-            soul = f.read()
+    soul = load_soul()
 
-    return f"""{soul}
-
-請根據以下文章內容回答使用者問題。
+    prompt = f"""請根據以下文章內容回答使用者問題。
 
 回答規則：
 - 只根據提供的文章內容回答，不要加入文章以外的觀點
@@ -195,14 +239,16 @@ def build_prompt(question: str, articles: list) -> str:
 【使用者問題】
 {question}"""
 
+    return soul, prompt
+
 
 # ── 步驟五：Sonnet 正式回答 ──────────────────────────────
 def generate_answer(question: str, articles: list) -> str:
     if not articles:
         return NO_RESULT_MSG
 
-    prompt = build_prompt(question, articles)
-    return call_claude(SONNET, prompt, max_tokens=2000)
+    soul, prompt = build_prompt(question, articles)
+    return call_claude_with_cache(soul, prompt, max_tokens=2000)
 
 
 # ── 載入資料 ─────────────────────────────────────────────

@@ -32,7 +32,7 @@ def stream_answer(question: str, articles: list):
         yield 'data: [DONE]\n\n'
         return
 
-    prompt = build_prompt(question, articles)
+    soul, prompt = build_prompt(question, articles)
 
     try:
         resp = req.post(
@@ -41,12 +41,22 @@ def stream_answer(question: str, articles: list):
                 "Content-Type":      "application/json",
                 "x-api-key":         API_KEY,
                 "anthropic-version": "2023-06-01",
+                "anthropic-beta":    "prompt-caching-2024-07-31",
             },
             json={
                 "model":      SONNET,
                 "max_tokens": 2000,
                 "stream":     True,
-                "messages":   [{"role": "user", "content": prompt}],
+                "system": [
+                    {
+                        "type":          "text",
+                        "text":          soul,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
             },
             stream=True,
             timeout=60,
