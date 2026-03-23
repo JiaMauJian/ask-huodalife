@@ -29,7 +29,6 @@
       --card: #ffffff;
       --accent: #2c2c28;
       --input-bar-height: 80px;
-      /* 預估輸入列高度，給 scroll 用 */
     }
 
     body {
@@ -235,7 +234,6 @@
     /* ════════════════════════════════════
        捲動區域（header + 對話）
     ════════════════════════════════════ */
-    /* 桌機：正常文件流 */
     @media (max-width: 600px) {
       .scroll-area {
         flex: 1;
@@ -245,7 +243,7 @@
       }
     }
 
-    /* ── Header（精簡，只在空白狀態顯示完整版） ── */
+    /* ── Header ── */
     header {
       width: 100%;
       max-width: 680px;
@@ -468,14 +466,12 @@
     /* ════════════════════════════════════
        固定底部輸入列
     ════════════════════════════════════ */
-    /* 桌機：輸入列跟著內容自然排列 */
     .input-bar {
       background: var(--bg);
       border-top: 1px solid var(--border);
       padding: 20px 24px 32px;
     }
 
-    /* 手機：固定在底部，鍵盤上方 */
     @media (max-width: 600px) {
       .input-bar {
         flex-shrink: 0;
@@ -504,7 +500,6 @@
       outline: none;
       font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
       font-size: 16px;
-      /* 16px 避免 iOS 自動放大 */
       font-weight: 400;
       line-height: 1.7;
       letter-spacing: 0.01em;
@@ -534,7 +529,6 @@
       cursor: pointer;
       transition: background-color 0.2s ease, transform 0.1s ease;
       touch-action: manipulation;
-      /* 避免 iOS 300ms 延遲產生雙擊 */
       user-select: none;
     }
 
@@ -676,6 +670,15 @@
     const textEl = document.getElementById('answerText')
     const scrollArea = document.getElementById('scrollArea')
     const mainHeader = document.getElementById('mainHeader')
+
+    // ── 修正手機鍵盤遮住輸入列 ────────────────────────
+    if (window.visualViewport) {
+      function onViewportChange() {
+        document.body.style.height = window.visualViewport.height + 'px'
+      }
+      window.visualViewport.addEventListener('resize', onViewportChange)
+      window.visualViewport.addEventListener('scroll', onViewportChange)
+    }
 
     // ── 捲到底部 ──────────────────────────────────────
     function scrollToBottom() {
@@ -830,7 +833,6 @@
       mainHeader.classList.add('compact')
       activeId = null
 
-      // 捲到 loading 可見
       setTimeout(scrollToBottom, 50)
 
       let fullAnswer = ''
@@ -855,7 +857,6 @@
         cursor.className = 'cursor'
         textEl.appendChild(cursor)
 
-        // 捲到回答卡片
         setTimeout(scrollToBottom, 50)
 
         while (true) {
@@ -875,7 +876,6 @@
               if (obj.token) {
                 fullAnswer += obj.token
                 cursor.insertAdjacentText('beforebegin', obj.token)
-                // 串流時持續捲到底
                 scrollArea.scrollTo({ top: scrollArea.scrollHeight })
               }
             } catch { /* skip */ }
