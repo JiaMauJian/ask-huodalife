@@ -42,7 +42,6 @@
       min-height: 100vh;
     }
 
-    /* 手機版：鎖住 viewport，固定底部輸入列 */
     @media (max-width: 600px) {
       body {
         height: 100dvh;
@@ -53,9 +52,6 @@
       }
     }
 
-    /* ════════════════════════════════════
-       側邊欄
-    ════════════════════════════════════ */
     .sidebar {
       position: fixed;
       top: 0;
@@ -195,9 +191,6 @@
       display: block;
     }
 
-    /* ════════════════════════════════════
-       歷史按鈕（左上角）
-    ════════════════════════════════════ */
     .history-toggle {
       position: fixed;
       top: 16px;
@@ -231,9 +224,6 @@
       flex-shrink: 0;
     }
 
-    /* ════════════════════════════════════
-       捲動區域（header + 對話）
-    ════════════════════════════════════ */
     @media (max-width: 600px) {
       .scroll-area {
         flex: 1;
@@ -243,7 +233,6 @@
       }
     }
 
-    /* ── Header ── */
     header {
       width: 100%;
       max-width: 680px;
@@ -296,6 +285,14 @@
       letter-spacing: 0.01em;
     }
 
+    .subtitle .notice {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 13px;
+      color: #999;
+      letter-spacing: 0.04em;
+    }
+
     header.compact .subtitle,
     header.compact .divider {
       display: none;
@@ -308,7 +305,6 @@
       margin: 24px auto;
     }
 
-    /* ── 對話區 ── */
     .chat-area {
       width: 100%;
       max-width: 680px;
@@ -316,7 +312,6 @@
       padding: 0 24px;
     }
 
-    /* loading */
     .loading {
       display: none;
       align-items: center;
@@ -363,7 +358,6 @@
       }
     }
 
-    /* 回答卡片 */
     .answer-card {
       display: none;
       background: var(--card);
@@ -463,9 +457,87 @@
       font-size: 15px;
     }
 
-    /* ════════════════════════════════════
-       固定底部輸入列
-    ════════════════════════════════════ */
+    .copy-toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--ink);
+      color: #fff;
+      font-size: 13px;
+      letter-spacing: 0.03em;
+      padding: 10px 18px;
+      border-radius: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap;
+      z-index: 300;
+    }
+
+    .copy-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .claude-hint {
+      margin-top: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .claude-hint-text {
+      font-size: 13px;
+      color: #444;
+      line-height: 1.6;
+      letter-spacing: 0.02em;
+    }
+
+    .claude-btn {
+      flex-shrink: 0;
+      height: 36px;
+      padding: 0 16px;
+      font-size: 14px;
+      font-family: 'Noto Sans TC', sans-serif;
+      letter-spacing: 0.05em;
+      color: #fff;
+      /* 白字 */
+      background: #1a1a18;
+      /* 深色背景，跟你的主色一致 */
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      white-space: nowrap;
+    }
+
+    .claude-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: #fff;
+      /* SVG 跟著白色 */
+    }
+
+    .claude-btn:hover {
+      background: #333;
+      /* hover 顯眼色 */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .claude-btn:active {
+      background: #000;
+      transform: scale(0.97);
+    }
+
     .input-bar {
       background: var(--bg);
       border-top: 1px solid var(--border);
@@ -552,9 +624,6 @@
       height: 16px;
     }
 
-    /* ════════════════════════════════════
-       手機
-    ════════════════════════════════════ */
     @media (max-width: 600px) {
       h1 {
         font-size: 52px;
@@ -580,16 +649,73 @@
         padding: 0 12px;
       }
     }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.25);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px;
+      width: 320px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-title {
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .modal-actions button {
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .modal-actions button:last-child {
+      background: #1a1a18;
+      color: #fff;
+      border: none;
+    }
   </style>
 
 </head>
 
 <body>
 
-  <!-- 側邊欄遮罩 -->
   <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
-  <!-- 側邊欄 -->
+  <!-- 複製成功提示 -->
+  <div class="copy-toast" id="copyToast">📋 分析模板已複製，貼到 Claude 即可</div>
+
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-title">歷史記錄</div>
@@ -603,7 +729,6 @@
     </div>
   </div>
 
-  <!-- 歷史按鈕 -->
   <button class="history-toggle" onclick="toggleSidebar()">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
       stroke-linejoin="round">
@@ -613,7 +738,6 @@
     <span>歷史記錄</span>
   </button>
 
-  <!-- 捲動區域 -->
   <div class="scroll-area" id="scrollArea">
     <header id="mainHeader">
       <div class="site-label">豁達人生財經室</div>
@@ -622,7 +746,8 @@
       <div class="divider"></div>
       <div class="subtitle">
         基於豁達人生財經室月報、年報、好書分享的知識助理<br>
-        回答內容純屬知識整理，不代表任何投資建議
+        回答內容純屬知識整理，不代表任何投資建議<br>
+        <span class="notice">⚠ 目前每次只能回答單一問題，尚不支援連續對談</span>
       </div>
     </header>
 
@@ -646,10 +771,21 @@
         </div>
         <div class="answer-text" id="answerText"></div>
       </div>
+
+      <div class="claude-hint">
+        <div class="claude-hint-text">想進一步做產業或個股分析？</div>
+        <a id="claudeBtn" class="claude-btn" href="#" onclick="openClaude(event)" target="_blank"
+          rel="noopener noreferrer">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M8 2l1.5 4.5H14l-3.7 2.7 1.4 4.3L8 11l-3.7 2.5 1.4-4.3L2 6.5h4.5z" />
+          </svg>
+          問 Claude
+        </a>
+      </div>
     </div>
   </div>
 
-  <!-- 固定底部輸入列 -->
   <div class="input-bar">
     <div class="input-inner">
       <textarea id="question" placeholder="輸入你的投資問題⋯⋯" rows="1"></textarea>
@@ -662,6 +798,32 @@
     </div>
   </div>
 
+  <!-- Modal HTML -->
+  <div id="companyModal" class="modal">
+    <div class="modal-content" style="width:500px; max-width:90%; padding:20px;">
+      <div class="modal-title" style="font-size:18px; font-weight:bold; margin-bottom:15px;">輸入公司名稱與投資屬性</div>
+
+      <!-- 輸入區 -->
+      <div id="inputArea" style="display:flex; flex-direction:column; gap:10px;">
+        <input id="companyInput" type="text" placeholder="輸入公司名稱" style="padding:8px; font-size:14px;" />
+        <input id="investmentType" type="text" placeholder="投資屬性：短線、波段、長期" style="padding:8px; font-size:14px;" />
+
+        <div class="modal-actions" style="display:flex; justify-content:flex-end; gap:10px; margin-top:5px;">
+          <button onclick="closeModal()">取消</button>
+          <button onclick="confirmCompany()">確認</button>
+        </div>
+      </div>
+
+      <!-- 固定顯示步驟 -->
+      <div style="margin-bottom:15px; line-height:1.5;">
+        <div>說明：</div>
+        <div>按下確認後，會複製分析模板：</div>
+        <div>1️⃣ 自動跳轉到 Claude</div>
+        <div>2️⃣ 在輸入框內<b>長按</b>貼上內容（手機）或按 <b>Ctrl + V</b>（桌機）</div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const textarea = document.getElementById('question')
     const btn = document.getElementById('askBtn')
@@ -670,6 +832,89 @@
     const textEl = document.getElementById('answerText')
     const scrollArea = document.getElementById('scrollArea')
     const mainHeader = document.getElementById('mainHeader')
+
+    const CLAUDE_PROMPT = `請針對「XXX」進行以下分析，資料以最新公開資訊為準。
+我的投資屬性：[YYY]
+1. 基本面分析
+   - 營收請優先參考公司最新自結月營收數據，並呈現近一年趨勢
+   - EPS、毛利率趨勢
+   - 現金流狀況
+   - 股利政策
+2. 技術面分析
+   - 目前週/月線趨勢與位置
+   - 關鍵支撐壓力區間
+   - 量價關係
+3. 籌碼面分析
+   - 外資、投信、自營商近期動向
+   - 大股東持股變化
+   - 融資融券水位
+4. 產業分析
+   - 該公司所屬產業與景氣循環現況
+   - 主要競爭對手比較 3 家（先以台灣為主）
+   - 該產業未來 1～2 年供需與趨勢預測
+   - 該公司在產業中的定位與角色
+5. 個股深度分析
+   - 競爭優勢與弱點
+   - 主要風險因子
+   - 短、中、長期操作建議
+輸出格式：每段附小標題，重點條列，最後給綜合結論與評分（1～10 分）。`
+
+    function openClaude(e) {
+      e.preventDefault()
+      openModal()
+    }
+
+    function openModal() {
+      document.getElementById('companyModal').classList.add('show')
+      document.getElementById('companyInput').focus()
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('companyModal')
+      modal.style.display = 'none'
+
+      // 重置 modal 狀態
+      const inputArea = document.getElementById('inputArea')
+      const stepDiv = document.getElementById('stepGuide')
+      inputArea.style.display = 'block'
+      stepDiv.style.display = 'none'
+      document.getElementById('companyInput').value = ''
+    }
+
+    function copyText(text) {
+      try {
+        navigator.clipboard.writeText(text)
+      } catch (err) {
+        // fallback（超重要）
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+    }
+
+    function confirmCompany() {
+      const companyName = document.getElementById('companyInput').value.trim()
+      if (!companyName) {
+        alert('請輸入公司名稱')
+        return
+      }
+
+      const investmentType = document.getElementById('investmentType').value.trim()
+      if (!investmentType) {
+        alert('請輸入投資屬性')
+        return
+      }
+
+      // 替換模板並複製
+      const customizedPrompt = CLAUDE_PROMPT.replace('XXX', companyName).replace('YYY', investmentType)
+      copyText(customizedPrompt)
+
+      // 開新視窗（同步）
+      window.open('https://claude.ai', '_blank')
+    }
 
     // ── 修正手機鍵盤遮住輸入列 ────────────────────────
     if (window.visualViewport) {
@@ -680,12 +925,10 @@
       window.visualViewport.addEventListener('scroll', onViewportChange)
     }
 
-    // ── 捲到底部 ──────────────────────────────────────
     function scrollToBottom() {
       scrollArea.scrollTo({ top: scrollArea.scrollHeight, behavior: 'smooth' })
     }
 
-    // ── localStorage ──────────────────────────────────
     const STORAGE_KEY = 'xiaohuo_history'
 
     function loadHistory() {
@@ -704,7 +947,6 @@
       renderSidebar()
     }
 
-    // ── 側邊欄 ────────────────────────────────────────
     let activeId = null
 
     function renderSidebar() {
@@ -759,7 +1001,6 @@
       document.getElementById('overlay').classList.remove('show')
     }
 
-    // ── 工具 ──────────────────────────────────────────
     function formatTime(isoStr) {
       const d = new Date(isoStr)
       const today = new Date()
@@ -788,7 +1029,6 @@
         `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`)
     }
 
-    // ── textarea 自動高度 ─────────────────────────────
     function autoResizeTextarea() {
       textarea.style.height = 'auto'
       textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px'
@@ -803,7 +1043,6 @@
       }
     })
 
-    // ── 重新提問 ──────────────────────────────────────
     function startNewQuestion() {
       card.classList.remove('show')
       textEl.innerHTML = ''
@@ -816,7 +1055,6 @@
       scrollArea.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
-    // ── 送出問題 ──────────────────────────────────────
     let isSubmitting = false
 
     async function submitQuestion() {
@@ -901,7 +1139,6 @@
       }
     }
 
-    // 初始化
     renderSidebar()
   </script>
 

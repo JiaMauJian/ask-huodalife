@@ -1,6 +1,6 @@
 """
 豁達人生文章爬蟲
-支援多分類爬取，目前包含：月報、年度回顧
+支援多分類爬取，目前包含：月報、年度回顧、好書分享、交易紀錄
 支援斷點續爬：每爬完一篇立即寫入 articles.json，重跑時自動跳過已爬的文章
 
 執行方式：
@@ -21,12 +21,20 @@ BLOG_SITE   = "huodalife"
 OUTPUT_FILE = "articles.json"
 PINNED_IDS  = {"9466534769"}  # 置頂文章 id，爬取時跳過
 
+# 交易紀錄分類只保留標題含以下關鍵字的文章
+TRADE_TITLE_KEYWORDS = [
+    "長期強勢型成長股",
+    "短期強勢型成長股",
+    "穩定型成長股",
+]
+
 # 要爬的分類清單：(分類名稱, category_id, 總頁數)
 # 頁數設 99 當保險，增量更新模式會在整頁都已存在時自動停止
 CATEGORIES = [
     ("月報",     "9003584108", 99),
     ("年度回顧", "9003584114", 99),
     ("好書分享", "9003584120", 99),
+    ("交易紀錄", "9003584117", 99),
 ]
 
 HEADERS = {
@@ -178,6 +186,17 @@ def fetch_article_content(url: str) -> str:
         return ""
 
 
+# ── 標題過濾（交易紀錄專用）────────────────────────────
+def should_include(title: str, category_name: str) -> bool:
+    """
+    交易紀錄分類只保留標題含指定關鍵字的文章
+    其他分類全部保留
+    """
+    if category_name != "交易紀錄":
+        return True
+    return any(kw in title for kw in TRADE_TITLE_KEYWORDS)
+
+
 # ── 爬單一分類 ───────────────────────────────────────────
 def scrape_category(category_name: str, category_id: str, total_pages: int,
                     existing: dict) -> tuple:
@@ -187,6 +206,7 @@ def scrape_category(category_name: str, category_id: str, total_pages: int,
     """
     total_new  = 0
     total_skip = 0
+    total_filtered = 0
 
     print(f"\n  ── {category_name}（最多 {total_pages} 頁）──")
 
@@ -199,13 +219,26 @@ def scrape_category(category_name: str, category_id: str, total_pages: int,
             time.sleep(random.uniform(2.0, 4.0))
             continue
 
-        # 檢查這頁是否全部已存在，是的話代表後面也不會有新文章，直接停止
-        new_in_page = [m for m in article_list if m["id"] not in existing]
-        if not new_in_page:
+        # 先套用標題過濾
+        filtered_list = [
+            m for m in article_list
+            if should_include(m["title"], category_name)
+        ]
+        filtered_out = len(article_list) - len(filtered_list)
+        if filtered_out > 0:
+            print(f"     🔖 標題過濾：略過 {filtered_out} 篇不符合的文章")
+            total_filtered += filtered_out
+
+        # 檢查這頁（過濾後）是否全部已存在
+        new_in_page = [m for m in filtered_list if m["id"] not in existing]
+
+        # 若整頁原始文章都已存在（不論過濾），代表後面也不會有新文章
+        all_existing = all(m["id"] in existing for m in article_list)
+        if not new_in_page and all_existing:
             print(f"     ✅ 整頁都已存在，停止爬取")
             break
 
-        for meta in article_list:
+        for meta in filtered_list:
             art_id = meta["id"]
 
             # 已爬過就跳過
@@ -239,6 +272,9 @@ def scrape_category(category_name: str, category_id: str, total_pages: int,
         print()
         time.sleep(random.uniform(2.0, 4.0))
 
+    if total_filtered > 0:
+        print(f"     🔖 本分類共略過 {total_filtered} 篇不符標題條件的文章")
+
     return total_new, total_skip
 
 
@@ -249,6 +285,7 @@ def main():
     print(f"  執行時間：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     cats_info = "、".join(f"{name}({pages}頁)" for name, _, pages in CATEGORIES)
     print(f"  爬取分類：{cats_info}")
+    print(f"  交易紀錄過濾關鍵字：{', '.join(TRADE_TITLE_KEYWORDS)}")
     print(f"{'='*55}")
 
     existing   = load_articles()
