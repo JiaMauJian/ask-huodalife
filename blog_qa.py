@@ -155,7 +155,7 @@ def keyword_search(question: str, index: list, top_n: int = CANDIDATE_COUNT) -> 
 
 
 # ── 混合搜尋 ─────────────────────────────────────────────
-def hybrid_search(question: str, index: list, top_n: int = CANDIDATE_COUNT) -> list:
+def hybrid_search(question: str, index: list, top_n: int = CANDIDATE_COUNT, verbose: bool = False) -> list:
     """
     混合語意搜尋和關鍵字比對，回傳最終候選文章列表
     語意搜尋權重 0.7，關鍵字權重 0.3
@@ -166,6 +166,16 @@ def hybrid_search(question: str, index: list, top_n: int = CANDIDATE_COUNT) -> l
 
     # 關鍵字搜尋
     keyword_results = keyword_search(question, index, top_n=top_n * 2)
+
+    if verbose:
+        print(f"\n🔍 語意搜尋 top 5：")
+        if not query_emb:
+            print(f"   ⚠️ 無法取得 query embedding（VOYAGE_API_KEY 未設定？）")
+        for sim, entry in semantic_results[:5]:
+            print(f"   {sim:.4f} | {entry['title'][:50]}")
+        print(f"\n🔑 關鍵字搜尋 top 5：")
+        for score, entry in keyword_results[:5]:
+            print(f"   {score:5.0f} 分 | {entry['title'][:50]}")
 
     # 合併計分
     final_scores = {}
@@ -197,6 +207,13 @@ def hybrid_search(question: str, index: list, top_n: int = CANDIDATE_COUNT) -> l
 
     # 排序取 top_n
     ranked = sorted(final_scores.values(), key=lambda x: x["score"], reverse=True)
+
+    if verbose:
+        print(f"\n📊 混合排序 top 5：")
+        for item in ranked[:5]:
+            print(f"   {item['score']:.4f} | {item['entry']['title'][:50]}")
+        print()
+
     return [item["entry"] for item in ranked[:top_n]]
 
 
@@ -359,7 +376,7 @@ def ask(question: str, verbose: bool = True) -> str:
         print(f"\n{'─'*50}")
 
     # 語意 + 關鍵字混合搜尋（不再需要 expand_keywords）
-    candidates = hybrid_search(question, index)
+    candidates = hybrid_search(question, index, verbose=verbose)
 
     if verbose:
         print(f"📋 候選文章：{len(candidates)} 篇")
