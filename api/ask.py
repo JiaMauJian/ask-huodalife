@@ -1,5 +1,5 @@
 """
-Vercel Serverless Function - 串流版
+Vercel Serverless Function - 串流版（語意搜尋版）
 接收使用者問題，串流回傳 Sonnet 的回答
 """
 
@@ -15,10 +15,11 @@ load_dotenv()
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from blog_qa import (
-    expand_keywords, search_candidates,
-    select_top_articles, fetch_articles,
+    hybrid_search, select_top_articles, fetch_articles,
     load_data, build_prompt,
-    API_KEY, SONNET, NO_RESULT_MSG, SERVICE_ERROR_MSG
+    API_KEY, SONNET, NO_RESULT_MSG, SERVICE_ERROR_MSG,
+    # 保留向後相容的 export
+    expand_keywords, search_candidates,
 )
 from qa_logger import log_qa
 
@@ -51,6 +52,12 @@ def stream_answer(question: str, articles: list):
             stream=True,
             timeout=60,
         )
+
+        if resp.status_code != 200:
+            yield f'data: {json.dumps({"token": STREAM_ERROR_MSG}, ensure_ascii=False)}\n\n'
+            yield 'data: [DONE]\n\n'
+            return
+
     except Exception:
         yield f'data: {json.dumps({"token": STREAM_ERROR_MSG}, ensure_ascii=False)}\n\n'
         yield 'data: [DONE]\n\n'
@@ -100,13 +107,8 @@ class handler(BaseHTTPRequestHandler):
                 self._respond_json(500, {"error": "知識庫載入失敗"})
                 return
 
-            try:
-                keywords = expand_keywords(question)
-            except Exception:
-                self._stream_msg(STREAM_ERROR_MSG)
-                return
-
-            candidates = search_candidates(keywords, index, question)
+            # 語意 + 關鍵字混合搜尋（不再需要 expand_keywords）
+            candidates = hybrid_search(question, index)
 
             if not candidates:
                 self._stream_msg(NO_RESULT_MSG)
@@ -141,7 +143,7 @@ class handler(BaseHTTPRequestHandler):
             full_answer = "".join(answer_chunks)
             log_qa(
                 question=question,
-                keywords=keywords,
+                keywords=[],
                 candidate_count=len(candidates),
                 top_ids=top_ids,
                 articles=top_articles,
