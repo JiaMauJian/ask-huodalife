@@ -504,9 +504,7 @@
       font-family: 'Noto Sans TC', sans-serif;
       letter-spacing: 0.05em;
       color: #fff;
-      /* 白字 */
       background: #1a1a18;
-      /* 深色背景，跟你的主色一致 */
       border: none;
       border-radius: 18px;
       cursor: pointer;
@@ -523,12 +521,10 @@
       width: 14px;
       height: 14px;
       stroke: #fff;
-      /* SVG 跟著白色 */
     }
 
     .claude-btn:hover {
       background: #333;
-      /* hover 顯眼色 */
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       transform: translateY(-1px);
     }
@@ -801,12 +797,11 @@
   <!-- Modal HTML -->
   <div id="companyModal" class="modal">
     <div class="modal-content" style="width:500px; max-width:90%; padding:20px;">
-      <div class="modal-title" style="font-size:18px; font-weight:bold; margin-bottom:15px;">輸入公司名稱與投資屬性</div>
+      <div class="modal-title" style="font-size:18px; font-weight:bold; margin-bottom:15px;">輸入公司名稱</div>
 
       <!-- 輸入區 -->
       <div id="inputArea" style="display:flex; flex-direction:column; gap:10px;">
-        <input id="companyInput" type="text" placeholder="輸入公司名稱" style="padding:8px; font-size:14px;" />
-        <input id="investmentType" type="text" placeholder="投資屬性：短線、波段、長期" style="padding:8px; font-size:14px;" />
+        <input id="companyInput" type="text" placeholder="輸入公司名稱或股票代碼" style="padding:8px; font-size:14px;" />
 
         <div class="modal-actions" style="display:flex; justify-content:flex-end; gap:10px; margin-top:5px;">
           <button onclick="closeModal()">取消</button>
@@ -815,11 +810,10 @@
       </div>
 
       <!-- 固定顯示步驟 -->
-      <div style="margin-bottom:15px; line-height:1.5;">
-        <div>說明：</div>
-        <div>按下確認後，會複製分析模板：</div>
-        <div>1️⃣ 自動跳轉到 Claude</div>
-        <div>2️⃣ 在輸入框內<b>長按</b>貼上內容（手機）或按 <b>Ctrl + V</b>（桌機）</div>
+      <div style="margin-top:12px; margin-bottom:4px; line-height:1.8; font-size:13px; color:#666;">
+        說明：按下確認後，會複製分析模板：<br>
+        1️⃣ 自動跳轉到 Claude<br>
+        2️⃣ 在輸入框內<b>長按</b>貼上內容（手機）或按 <b>Ctrl + V</b>（桌機）
       </div>
     </div>
   </div>
@@ -834,30 +828,59 @@
     const mainHeader = document.getElementById('mainHeader')
 
     const CLAUDE_PROMPT = `請針對「XXX」進行以下分析，資料以最新公開資訊為準。
-我的投資屬性：[YYY]
-1. 基本面分析
-   - 營收請優先參考公司最新自結月營收數據，並呈現近一年趨勢
-   - EPS、毛利率趨勢
-   - 現金流狀況
-   - 股利政策
-2. 技術面分析
-   - 目前週/月線趨勢與位置
-   - 關鍵支撐壓力區間
-   - 量價關係
-3. 籌碼面分析
-   - 外資、投信、自營商近期動向
-   - 大股東持股變化
-   - 融資融券水位
-4. 產業分析
-   - 該公司所屬產業與景氣循環現況
-   - 主要競爭對手比較 3 家（先以台灣為主）
-   - 該產業未來 1～2 年供需與趨勢預測
-   - 該公司在產業中的定位與角色
-5. 個股深度分析
-   - 競爭優勢與弱點
-   - 主要風險因子
-   - 短、中、長期操作建議
-輸出格式：每段附小標題，重點條列，最後給綜合結論與評分（1～10 分）。`
+我的投資屬性：【順勢操作】
+
+背景說明：
+我已有自建圖表系統，可查看月營收、月增率、年增率、月均價趨勢圖表，並以此作為進出場主要依據。請針對我系統看不到的面向進行補強，不需重複列出營收數字或價格走勢。
+
+1. 營收動能本質解讀
+若分析月份為 1 月或 2 月，請先做春節工作天數校正：
+
+【前置步驟 - 必須執行，不可跳過】
+在進行任何計算前，先用網路搜尋確認：
+「今年除夕是幾月幾日」、「去年除夕是幾月幾日」
+將搜尋結果明確列出後，再進行以下校正計算。
+禁止依賴模型記憶回答日期。
+
+- 確認今年與去年春節（除夕）各落在幾月，推算兩年的 1 月與 2 月實際工作天數
+- 計算工作天數的 YoY 差異（多幾天或少幾天、影響幅度約幾 %）
+- 特別注意：若今年春節在 2 月、去年在 1 月（或反之），兩個月的工作天數落差可能高達 25~35%，對年增率的影響方向需明確說明（是壓低還是墊高了年增率）
+- 給出「工作天數校正後」的實質年增率判讀
+請以「XXX 自結」為關鍵字搜尋最新自結月 EPS，若找到請說明：自結 EPS 數字與前期比較、毛利率是否有改善或惡化跡象、業外損益是否有明顯干擾、這份數字是否支撐或挑戰目前股價位置。若確認查無自結資料則略過此項
+- 這波營收成長的核心驅動力是什麼？結構性還是一次性？
+- 動能目前處於加速、高原還是趨緩階段？
+- 未來 2~3 個月營收動能是否有延續或衰退跡象？
+
+2. 景氣循環與產業位置
+- 所屬產業目前在景氣循環的哪個位置？
+- 未來 1~2 年供需趨勢，動能還能持續多久？
+- 台灣主要競爭對手 3 家比較，該公司相對優勢是否仍在？
+
+3. 籌碼面風險評估
+- 外資、投信、自營商近期動向？
+- 融資水位是否過高？
+- 大股東或法人有無異常動作需要警惕？
+
+4. 系統訊號干擾因子
+- 請判斷目前股價是否跌破前波整理區支撐或前波低點？關鍵支撐價位約在哪裡？
+- 這波漲跌是個股自身基本面驅動，還是族群 / 大盤情緒帶動？如何區分？
+- 若是族群或大盤情緒造成的短期波動，月均價訊號應該如何解讀？該忽略還是等確認？
+- 基本面有無隱藏地雷（現金流、負債、業外損益）值得注意？
+
+5. 操作建議
+- 短線（1~4 週）、中線（1~3 月）、長線（3~12 月）各附具體價位參考
+- 針對順勢操作者，目前最應該做的一件事是什麼？
+
+輸出格式：
+每段附小標題，全部條列式文字，不產生任何圖表
+最後給綜合結論與評分（1～10 分）
+分析結束後，請在最末加一行：「⚠️ 自結 EPS 搜尋結果：[找到的數字 / 查無資料]，請自行 Google『XXX 自結』確認是否正確。」
+
+同場加映，盤中即時判斷短版：
+「XXX 今天跟族群一起 [漲停 / 大跌 / 跟大盤急殺]，請幫我判斷：
+這是自身基本面驅動還是情緒跟漲跟跌？
+月均價訊號此時可靠嗎？
+順勢操作者現在應該追、等還是觀望？請附具體價位參考。」`
 
     function openClaude(e) {
       e.preventDefault()
@@ -870,14 +893,7 @@
     }
 
     function closeModal() {
-      const modal = document.getElementById('companyModal')
-      modal.style.display = 'none'
-
-      // 重置 modal 狀態
-      const inputArea = document.getElementById('inputArea')
-      const stepDiv = document.getElementById('stepGuide')
-      inputArea.style.display = 'block'
-      stepDiv.style.display = 'none'
+      document.getElementById('companyModal').classList.remove('show')
       document.getElementById('companyInput').value = ''
     }
 
@@ -885,14 +901,19 @@
       try {
         navigator.clipboard.writeText(text)
       } catch (err) {
-        // fallback（超重要）
-        const textarea = document.createElement('textarea')
-        textarea.value = text
-        document.body.appendChild(textarea)
-        textarea.select()
+        const ta = document.createElement('textarea')
+        ta.value = text
+        document.body.appendChild(ta)
+        ta.select()
         document.execCommand('copy')
-        document.body.removeChild(textarea)
+        document.body.removeChild(ta)
       }
+    }
+
+    function showToast() {
+      const toast = document.getElementById('copyToast')
+      toast.classList.add('show')
+      setTimeout(() => toast.classList.remove('show'), 2500)
     }
 
     function confirmCompany() {
@@ -902,18 +923,14 @@
         return
       }
 
-      const investmentType = document.getElementById('investmentType').value.trim()
-      if (!investmentType) {
-        alert('請輸入投資屬性')
-        return
-      }
-
-      // 替換模板並複製
-      const customizedPrompt = CLAUDE_PROMPT.replace('XXX', companyName).replace('YYY', investmentType)
+      // 替換所有 XXX 為公司名稱
+      const customizedPrompt = CLAUDE_PROMPT.replaceAll('XXX', companyName)
       copyText(customizedPrompt)
+      closeModal()
+      showToast()
 
-      // 開新視窗（同步）
-      window.open('https://claude.ai', '_blank')
+      // 開啟 Claude
+      location.href = 'https://claude.ai'
     }
 
     // ── 修正手機鍵盤遮住輸入列 ────────────────────────
