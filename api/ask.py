@@ -18,8 +18,6 @@ from blog_qa import (
     hybrid_search, select_top_articles, fetch_articles,
     load_data, build_prompt,
     API_KEY, SONNET, NO_RESULT_MSG, SERVICE_ERROR_MSG,
-    # 保留向後相容的 export
-    expand_keywords, search_candidates,
 )
 from qa_logger import log_qa
 
@@ -100,6 +98,10 @@ class handler(BaseHTTPRequestHandler):
 
             if not question:
                 self._respond_json(400, {"error": "問題不能為空"})
+                return
+
+            if len(question) > 500:
+                self._respond_json(400, {"error": "問題太長，請精簡在 500 字以內"})
                 return
 
             index, articles_map = load_data()

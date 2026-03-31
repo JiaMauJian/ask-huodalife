@@ -17,6 +17,7 @@ import json
 import sys
 import os
 import math
+import numpy as np
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -114,7 +115,7 @@ def cosine_similarity(a: list, b: list) -> float:
     """計算兩個向量的 cosine similarity（Voyage 向量已正規化，dot product 即可）"""
     if not a or not b or len(a) != len(b):
         return 0.0
-    return sum(x * y for x, y in zip(a, b))
+    return float(np.dot(a, b))
 
 
 # ── 語意搜尋 ─────────────────────────────────────────────
@@ -217,26 +218,6 @@ def hybrid_search(question: str, index: list, top_n: int = CANDIDATE_COUNT, verb
     return [item["entry"] for item in ranked[:top_n]]
 
 
-# ── （保留向後相容）expand_keywords ──────────────────────
-def expand_keywords(question: str) -> list:
-    """
-    保留向後相容，但語意搜尋版本不再需要這個步驟。
-    直接回傳問題的 bigram 作為關鍵字，不呼叫 API。
-    """
-    keywords = list(set(
-        question[i:i+2] for i in range(len(question) - 1)
-    ))
-    return keywords
-
-
-# ── （保留向後相容）search_candidates ────────────────────
-def search_candidates(keywords: list, index: list, question: str = "") -> list:
-    """
-    保留向後相容，供 ask.py 使用。
-    現在改用 hybrid_search，keywords 參數不再使用。
-    """
-    return hybrid_search(question, index, top_n=CANDIDATE_COUNT)
-
 
 # ── Haiku 選出最相關的文章 id ────────────────────────────
 def select_top_articles(question: str, candidates: list) -> list:
@@ -264,7 +245,12 @@ def select_top_articles(question: str, candidates: list) -> list:
 - 只回傳 {TOP_K} 個 id，每行一個，不要其他文字"""
 
     result = call_claude(HAIKU, prompt, max_tokens=100)
-    ids = [line.strip() for line in result.strip().split("\n") if line.strip()]
+    valid_ids = {c["id"] for c in candidates}
+    ids = [
+        line.strip()
+        for line in result.strip().split("\n")
+        if line.strip() in valid_ids
+    ]
     return ids[:TOP_K]
 
 
@@ -276,6 +262,24 @@ def fetch_articles(ids: list, articles_map: dict) -> list:
         if art_id in articles_map:
             result.append(articles_map[art_id])
     return result
+
+
+# ── soul.md 快取 ─────────────────────────────────────────
+_soul_cache: str = None
+
+def _load_soul() -> str:
+    global _soul_cache
+    if _soul_cache is not None:
+        return _soul_cache
+    soul_path = Path("soul.md")
+    if not soul_path.exists():
+        soul_path = Path(__file__).parent / "soul.md"
+    if soul_path.exists():
+        with open(soul_path, "r", encoding="utf-8") as f:
+            _soul_cache = f.read()
+    else:
+        _soul_cache = ""
+    return _soul_cache
 
 
 # ── 共用 prompt 組裝 ─────────────────────────────────────
@@ -292,13 +296,7 @@ def build_prompt(question: str, articles: list) -> str:
             f"{'─'*40}\n\n"
         )
 
-    soul = ""
-    soul_path = Path("soul.md")
-    if not soul_path.exists():
-        soul_path = Path(__file__).parent / "soul.md"
-    if soul_path.exists():
-        with open(soul_path, "r", encoding="utf-8") as f:
-            soul = f.read()
+    soul = _load_soul()
 
     return f"""{soul}
 
@@ -337,7 +335,14 @@ def generate_answer(question: str, articles: list) -> str:
 
 
 # ── 載入資料 ─────────────────────────────────────────────
+_index_cache: list = None
+_articles_cache: dict = None
+
 def load_data() -> tuple:
+    global _index_cache, _articles_cache
+    if _index_cache is not None:
+        return _index_cache, _articles_cache
+
     if not Path(INDEX_FILE).exists():
         print(f"❌ 找不到 {INDEX_FILE}")
         return [], {}
@@ -362,7 +367,9 @@ def load_data() -> tuple:
             else:
                 articles_map[data["id"]] = data
 
-    return index, articles_map
+    _index_cache = index
+    _articles_cache = articles_map
+    return _index_cache, _articles_cache
 
 
 # ── 主流程 ───────────────────────────────────────────────
