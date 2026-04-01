@@ -21,9 +21,6 @@ BLOG_SITE   = "huodalife"
 OUTPUT_FILE = "articles.json"
 PINNED_IDS  = {"9466534769"}  # 置頂文章 id，爬取時跳過
 
-# 爬到新文章後是否自動更新索引（pixnet 來源不穩定時設為 False）
-AUTO_INDEX  = False
-
 # 交易紀錄分類只保留標題含以下關鍵字的文章
 TRADE_TITLE_KEYWORDS = [
     "長期強勢型成長股",
@@ -307,13 +304,11 @@ def main():
     print(f"  總計 {len(existing)} 篇文章存於 {OUTPUT_FILE}")
     print(f"{'='*55}\n")
 
-    # 有新文章才更新索引（AUTO_INDEX = False 時跳過）
-    if total_new > 0 and AUTO_INDEX:
+    # 有新文章才更新索引
+    if total_new > 0:
         print('  🔄 發現新文章，開始更新摘要索引...')
         import blog_indexer
         blog_indexer.main()
-    elif total_new > 0:
-        print('  ℹ️  有新文章，但 AUTO_INDEX=False，請手動執行 blog_indexer.py')
     else:
         print('  ℹ️  無新文章，跳過索引更新')
 
