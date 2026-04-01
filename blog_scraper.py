@@ -232,9 +232,8 @@ def scrape_category(category_name: str, category_id: str, total_pages: int,
         # 檢查這頁（過濾後）是否全部已存在
         new_in_page = [m for m in filtered_list if m["id"] not in existing]
 
-        # 若整頁原始文章都已存在（不論過濾），代表後面也不會有新文章
-        all_existing = all(m["id"] in existing for m in article_list)
-        if not new_in_page and all_existing:
+        # 過濾後沒有新文章，代表後面也不會有新文章
+        if not new_in_page and filtered_list:
             print(f"     ✅ 整頁都已存在，停止爬取")
             break
 
